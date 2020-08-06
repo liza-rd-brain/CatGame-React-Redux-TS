@@ -37,9 +37,11 @@ export type GameState =
 
 export type Action =
   | { type: "clickStartButton" }
-  | { type: "catJump" }
+  | { type: "arrowPressed"; payload: MoveDirection }
   | { type: "catDoubleJump" }
   | { type: "catfFall" };
+
+export type CatMove = "jump" | "doubleJump" | "fall" | "run";
 
 export type State = {
   gameState: GameState;
@@ -79,11 +81,19 @@ function App() {
     switch (gameState) {
       case "waitingStart":
         return <StartScreen />;
+      case "gameStarted.jump": {
+        return (
+          <>
+            <Cat move="jump" />
+            <Arrows />
+          </>
+        );
+      }
 
       default:
         return (
           <>
-            <Cat />
+            <Cat move="run" />
             <Arrows />
           </>
         );
