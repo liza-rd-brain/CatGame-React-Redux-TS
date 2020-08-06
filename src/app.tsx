@@ -5,7 +5,7 @@ import { createStore, compose } from "redux";
 import styled, { ThemeProvider } from "styled-components";
 
 import Cat from "./features/Cat";
-
+import StartScreen from "./features/StartScreen";
 import waitingStartPhase from "./phases/waitingStart";
 /*1. стартовый экран
 2. котик бежит и прыгает на белом фоне
@@ -14,10 +14,12 @@ import waitingStartPhase from "./phases/waitingStart";
 
 const Field = styled.div`
   position: relative;
-  width: 300px;
+  width: 600px;
   height: 500px;
   margin: 0 auto;
   border: 1px solid black;
+  display: flex;
+  flex-direction: column;
 `;
 
 export type GameState =
@@ -57,11 +59,17 @@ const reducer = (state = getInitialState(), action: Action): State => {
 };
 
 function App() {
-  return (
-    <Field>
-      <Cat />
-    </Field>
-  );
+  const [gameState] = useSelector((state: State) => [state.gameState]);
+  const getGameScreen = () => {
+    switch (gameState) {
+      case "waitingStart":
+        return <StartScreen />;
+
+      default:
+        return <Cat />;
+    }
+  };
+  return <Field>{getGameScreen()}</Field>;
 }
 
 const store = createStore(
