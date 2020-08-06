@@ -5,8 +5,11 @@ import { createStore, compose } from "redux";
 import styled, { ThemeProvider } from "styled-components";
 
 import Cat from "./features/Cat";
+import Arrows from "./features/Arrows";
 import StartScreen from "./features/StartScreen";
+
 import waitingStartPhase from "./phases/waitingStart";
+import run from "./phases/gameStarted/run";
 /*1. стартовый экран
 2. котик бежит и прыгает на белом фоне
 3. описать, спроектировать сущности и состояния
@@ -21,6 +24,8 @@ const Field = styled.div`
   display: flex;
   flex-direction: column;
 `;
+
+export type MoveDirection = "top" | "bottom";
 
 export type GameState =
   | "waitingStart"
@@ -53,6 +58,16 @@ const reducer = (state = getInitialState(), action: Action): State => {
     case "waitingStart": {
       return waitingStartPhase(action, state);
     }
+    case "gameStarted": {
+      switch (phaseInner) {
+        case "run": {
+          return run(action, state);
+        }
+        default:
+          return state;
+      }
+    }
+
     default:
       return state;
   }
@@ -66,7 +81,12 @@ function App() {
         return <StartScreen />;
 
       default:
-        return <Cat />;
+        return (
+          <>
+            <Cat />
+            <Arrows />
+          </>
+        );
     }
   };
   return <Field>{getGameScreen()}</Field>;
