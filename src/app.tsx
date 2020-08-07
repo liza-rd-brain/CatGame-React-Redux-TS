@@ -4,12 +4,13 @@ import { Provider, useDispatch, useSelector } from "react-redux";
 import { createStore, compose } from "redux";
 import styled, { ThemeProvider } from "styled-components";
 
-import Cat from "./features/Cat";
+import { Cat, CatAnimated } from "./features/Cat";
 import Arrows from "./features/Arrows";
 import StartScreen from "./features/StartScreen";
 
 import waitingStartPhase from "./phases/waitingStart";
 import run from "./phases/gameStarted/run";
+import jump from "./phases/gameStarted/jump";
 /*1. стартовый экран
 2. котик бежит и прыгает на белом фоне
 3. описать, спроектировать сущности и состояния
@@ -38,6 +39,7 @@ export type GameState =
 export type Action =
   | { type: "clickStartButton" }
   | { type: "arrowPressed"; payload: MoveDirection }
+  | { type: "endJump" }
   | { type: "catDoubleJump" }
   | { type: "catfFall" };
 
@@ -65,6 +67,9 @@ const reducer = (state = getInitialState(), action: Action): State => {
         case "run": {
           return run(action, state);
         }
+        case "jump": {
+          return jump(action, state);
+        }
         default:
           return state;
       }
@@ -77,6 +82,21 @@ const reducer = (state = getInitialState(), action: Action): State => {
 
 function App() {
   const [gameState] = useSelector((state: State) => [state.gameState]);
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    switch (gameState) {
+      case "gameStarted.jump": {
+        const timerJump = setTimeout(() => dispatch({ type: "endJump" }), 600);
+        return (): void => {
+          clearTimeout(timerJump);
+        };
+      }
+      default:
+        break;
+    }
+  }, [gameState]);
+
   const getGameScreen = () => {
     switch (gameState) {
       case "waitingStart":
@@ -84,7 +104,7 @@ function App() {
       case "gameStarted.jump": {
         return (
           <>
-            <Cat move="jump" />
+            <CatAnimated />
             <Arrows />
           </>
         );
