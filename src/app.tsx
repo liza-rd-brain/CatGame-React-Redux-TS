@@ -1,10 +1,10 @@
-import React, { useEffect, useMemo, forwardRef } from "react";
+import React, { useEffect, useRef } from "react";
 import ReactDOM from "react-dom";
 import { Provider, useDispatch, useSelector } from "react-redux";
 import { createStore, compose } from "redux";
 import styled, { ThemeProvider } from "styled-components";
 
-import { Cat, CatAnimated } from "./features/Cat";
+import Cat from "./features/Cat";
 import Arrows from "./features/Arrows";
 import StartScreen from "./features/StartScreen";
 
@@ -47,12 +47,14 @@ export type CatMove = "jump" | "doubleJump" | "fall" | "run";
 
 export type State = {
   gameState: GameState;
+  y: number;
   /*health
    */
 };
 const getInitialState = (): State => {
   return {
     gameState: "waitingStart",
+    y: 0,
   };
 };
 
@@ -87,33 +89,29 @@ function App() {
   useEffect(() => {
     switch (gameState) {
       case "gameStarted.jump": {
-        const timerJump = setTimeout(() => dispatch({ type: "endJump" }), 600);
-        return (): void => {
-          clearTimeout(timerJump);
-        };
+        /*функция прыжка = изменение координат */
+        if (refCat != null && refCat.current != null) {
+          refCat.current.style.transform = `translateY(-100px)`;
+          refCat.current.style.transitionDuration = `300ms`;
+        }
       }
       default:
         break;
     }
   }, [gameState]);
 
+  const refCat = useRef<HTMLDivElement>(null);
+  console.log(refCat);
+
   const getGameScreen = () => {
     switch (gameState) {
       case "waitingStart":
         return <StartScreen />;
-      case "gameStarted.jump": {
-        return (
-          <>
-            <CatAnimated />
-            <Arrows />
-          </>
-        );
-      }
 
       default:
         return (
           <>
-            <Cat move="run" />
+            <Cat ref={refCat} />
             <Arrows />
           </>
         );
