@@ -11,6 +11,7 @@ import StartScreen from "./features/StartScreen";
 import waitingStartPhase from "./phases/waitingStart";
 import run from "./phases/gameStarted/run";
 import jump from "./phases/gameStarted/jump";
+import fall from "./phases/gameStarted/fall";
 /*1. стартовый экран
 2. котик бежит и прыгает на белом фоне
 3. описать, спроектировать сущности и состояния
@@ -26,12 +27,17 @@ const Field = styled.div`
   flex-direction: column;
 `;
 
+const duration = 350;
+const heightY = 100;
+
 export type MoveDirection = "top" | "bottom";
 
 export type GameState =
   | "waitingStart"
   | "gameStarted.run"
   | "gameStarted.jump"
+  | "gameStarted.jumpGoing"
+  | "gameStarted.fall"
   | "gameStarted.doubleJump"
   | "endGame"
   | "getEndScreen";
@@ -39,9 +45,12 @@ export type GameState =
 export type Action =
   | { type: "clickStartButton" }
   | { type: "arrowPressed"; payload: MoveDirection }
-  | { type: "endJump" }
-  | { type: "catDoubleJump" }
-  | { type: "catfFall" };
+  | { type: "jumpGoing"; payload: number }
+  | { type: "fallGoing"; payload: number }
+  | { type: "endOfJump" /*  payload: number */ }
+  | { type: "endOfFall" /* payload: number */ }
+  | { type: "catfFall" }
+  | { type: "catDoubleJump" };
 
 export type CatMove = "jump" | "doubleJump" | "fall" | "run";
 
@@ -72,6 +81,13 @@ const reducer = (state = getInitialState(), action: Action): State => {
         case "jump": {
           return jump(action, state);
         }
+        case "jumpGoing": {
+          return jump(action, state);
+        }
+
+        case "fall": {
+          return fall(action, state);
+        }
         default:
           return state;
       }
@@ -82,26 +98,72 @@ const reducer = (state = getInitialState(), action: Action): State => {
   }
 };
 
+/* function getDeltaCoord(startCoord, endCoord, time) {
+  return (endCoord - startCoord) / time;
+} */
+
 function App() {
-  const [gameState] = useSelector((state: State) => [state.gameState]);
+  let [gameState, yCoord] = useSelector((state: State) => [
+    state.gameState,
+    state.y,
+  ]);
   const dispatch = useDispatch();
+
+  const deltaCooord = (heightY * 20) / duration;
 
   useEffect(() => {
     switch (gameState) {
       case "gameStarted.jump": {
-        /*функция прыжка = изменение координат */
-        if (refCat != null && refCat.current != null) {
-          refCat.current.style.transform = `translateY(-100px)`;
-          refCat.current.style.transitionDuration = `300ms`;
-        }
+        let currStepCoord = yCoord + deltaCooord;
+        const yCoordMax = heightY;
+        if (yCoord < yCoordMax - deltaCooord) {
+          const timerJumpGoing = setTimeout(() => {
+            if (refCat != null && refCat.current != null) {
+              refCat.current.style.transform = `translateY(-${currStepCoord}px`;
+              refCat.current.style.transitionDuration = `20ms`;
+              console.log(currStepCoord);
+              dispatch({ type: "jumpGoing", payload: currStepCoord });
+            }
+          }, 20);
+          return (): void => {
+            clearTimeout(timerJumpGoing);
+          };
+        } else
+          dispatch({
+            type: "endOfJump",
+          });
       }
+
+      case "gameStarted.fall": {
+        const currStepCoord = yCoord - deltaCooord;
+        const newCoord = yCoord - deltaCooord;
+        const yCoordMin = 0;
+
+        if (yCoord > yCoordMin) {
+          const timerFallGoing = setTimeout(() => {
+            if (refCat != null && refCat.current != null) {
+              refCat.current.style.transform = `translateY(-${newCoord}px`;
+              refCat.current.style.transitionDuration = `20ms`;
+              console.log(currStepCoord);
+              dispatch({ type: "fallGoing", payload: newCoord });
+            }
+          }, 20);
+          return (): void => {
+            clearTimeout(timerFallGoing);
+          };
+        } else
+          dispatch({
+            type: "endOfFall",
+          });
+      }
+
       default:
         break;
     }
-  }, [gameState]);
+  }, [gameState, yCoord]);
 
   const refCat = useRef<HTMLDivElement>(null);
-  console.log(refCat);
+  /*   console.log(refCat); */
 
   const getGameScreen = () => {
     switch (gameState) {
