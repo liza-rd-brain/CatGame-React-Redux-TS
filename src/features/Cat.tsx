@@ -17,8 +17,9 @@ const CatItem = styled.div`
   z-index: 1;
   width: 146px;
   height: 50px;
+  bottom:-15px;
   /*top будет меняться от Y */
-  top: 235px;
+ /*  top: 235px; */
   /*котик посередине*/
   left: 240px;
   background: url("../assets/cat_run.gif") no-repeat;

@@ -7,6 +7,7 @@ import styled, { ThemeProvider } from "styled-components";
 import Cat from "./features/Cat";
 import Arrows from "./features/Arrows";
 import StartScreen from "./features/StartScreen";
+import Grid from "./features/Grid";
 
 import waitingStartPhase from "./phases/waitingStart";
 import run from "./phases/gameStarted/run";
@@ -27,8 +28,11 @@ const Field = styled.div`
   flex-direction: column;
 `;
 
-const duration = 350;
-const heightY = 100;
+export const duration = 350;
+export const heightY = 50;
+export const addJumpHeight = 30;
+export const levelNumber = 6;
+/* export const levelList = [0, 1, 2, 3, 4, 5]; */
 
 export type MoveDirection = "top" | "bottom";
 
@@ -54,18 +58,60 @@ export type Action =
 
 export type CatMove = "jump" | "doubleJump" | "fall" | "run";
 
+export type LevelItem = {
+  startCoord: number;
+  endCoord: number;
+  cat?: string;
+};
+
+export type GameLevelList = Map<string, LevelItem>;
+
 export type State = {
   gameState: GameState;
+  /*пока y вынесен, потом убрать в кота */
   y: number;
+  levelList: GameLevelList;
+
   /*health
    */
 };
+
 const getInitialState = (): State => {
   return {
     gameState: "waitingStart",
     y: 0,
+    levelList: getLevelList(),
   };
 };
+
+function getLevelList() {
+  /*котик по дефолту на уровне 2*/
+
+  const levelList: GameLevelList = new Map();
+  for (let i = 0; i < levelNumber; i++) {
+    const levelWithCat = 2;
+    switch (i) {
+      case levelWithCat: {
+        const objItem = {
+          startCoord: i * heightY,
+          endCoord: (i + 1) * heightY,
+          cat: "cat",
+        };
+        levelList.set(`${i}`, objItem);
+        break;
+      }
+      default: {
+        const objItem = {
+          startCoord: i * heightY,
+          endCoord: (i + 1) * heightY,
+        };
+        levelList.set(`${i}`, objItem);
+        break;
+      }
+    }
+  }
+  return levelList;
+}
 
 const reducer = (state = getInitialState(), action: Action): State => {
   const [phaseOuter, phaseInner] = state.gameState.split(".");
@@ -109,13 +155,13 @@ function App() {
   ]);
   const dispatch = useDispatch();
 
-  const deltaCooord = (heightY * 20) / duration;
+  const deltaCooord = ((heightY + addJumpHeight / 2) * 20) / duration;
 
   useEffect(() => {
     switch (gameState) {
       case "gameStarted.jump": {
         let currStepCoord = yCoord + deltaCooord;
-        const yCoordMax = heightY;
+        const yCoordMax = heightY + addJumpHeight;
         if (yCoord < yCoordMax - deltaCooord) {
           const timerJumpGoing = setTimeout(() => {
             if (refCat != null && refCat.current != null) {
@@ -173,7 +219,8 @@ function App() {
       default:
         return (
           <>
-            <Cat ref={refCat} />
+            {/* <Cat ref={refCat} /> */}
+            <Grid refItem={refCat} />
             <Arrows />
           </>
         );
