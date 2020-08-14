@@ -36,8 +36,6 @@ const levelWithCat = 2;
 /*4-потом домики!! */
 const levelWithGroung = [0, 2, 4];
 
-/* export const levelList = [0, 1, 2, 3, 4, 5]; */
-
 export type MoveDirection = "top" | "bottom";
 
 export type GameState =
@@ -195,7 +193,7 @@ function App() {
   ]);
   const dispatch = useDispatch();
 
-  const deltaCooord = (heightY * 20) / duration;
+  const deltaCooord = (heightY * 20 + addJumpHeight) / duration;
 
   useEffect(() => {
     switch (gameState) {
@@ -204,14 +202,15 @@ function App() {
         if (levelItem) {
           const startCoord = levelItem.startCoord;
           const endCoord = levelItem.endCoord;
-          const currStepCoord = ((yCoord - startCoord + deltaCooord) * 3) / 2;
-          if (yCoord < endCoord) {
+          const catCoord = levelItem.cat ? levelItem.cat.y : 0;
+          const currStepCoord = ((catCoord - startCoord + deltaCooord) * 3) / 2;
+          if (catCoord < endCoord) {
             const timerJumpGoing = setTimeout(() => {
               if (refCat != null && refCat.current != null) {
                 refCat.current.style.transform = `translateY(-${currStepCoord}px`;
                 refCat.current.style.transitionDuration = `20ms`;
 
-                const newYCoord = deltaCooord + yCoord;
+                const newYCoord = deltaCooord + catCoord;
                 console.log("jump", currStepCoord);
                 console.log("newYCoord", newYCoord);
                 dispatch({ type: "jumpGoing", payload: newYCoord });
@@ -231,13 +230,14 @@ function App() {
         if (levelItem) {
           const startCoord = levelItem.startCoord;
           const endCoord = levelItem.endCoord;
-          const currStepCoord = ((yCoord - startCoord) * 3) / 2;
-          if (yCoord > startCoord) {
+          const catCoord = levelItem.cat ? levelItem.cat.y : 0;
+          const currStepCoord = ((catCoord - startCoord) * 3) / 2;
+          if (catCoord > startCoord) {
             const timerFallGoing = setTimeout(() => {
               if (refCat != null && refCat.current != null) {
                 refCat.current.style.transform = `translateY(-${currStepCoord}px`;
                 refCat.current.style.transitionDuration = `20ms`;
-                const newYCoord = yCoord - deltaCooord;
+                const newYCoord = catCoord - deltaCooord;
                 console.log("fall", currStepCoord);
                 console.log("newYCoord", newYCoord);
                 dispatch({ type: "fallGoing", payload: newYCoord });
@@ -256,7 +256,7 @@ function App() {
       default:
         break;
     }
-  }, [gameState, levelList, yCoord]);
+  }, [gameState, levelList /* yCoord */]);
 
   const refCat = useRef<HTMLDivElement>(null);
 
@@ -289,47 +289,3 @@ ReactDOM.render(
   </Provider>,
   document.querySelector("#root")
 );
-
-/* 
-        let currStepCoord = yCoord + deltaCooord;
-        const yCoordMax = heightY + addJumpHeight;
-        if (yCoord < yCoordMax - deltaCooord) {
-          const timerJumpGoing = setTimeout(() => {
-            if (refCat != null && refCat.current != null) {
-              refCat.current.style.transform = `translateY(-${currStepCoord}px`;
-              refCat.current.style.transitionDuration = `20ms`;
-              console.log(currStepCoord);
-              dispatch({ type: "jumpGoing", payload: currStepCoord });
-            }
-          }, 20);
-          return (): void => {
-            clearTimeout(timerJumpGoing);
-          };
-        } else
-          dispatch({
-            type: "endOfJump",
-          });
-      } */
-/*полет до ближайшего ground уровня */
-/*  case "gameStarted.fall": {
-        const currStepCoord = yCoord - deltaCooord;
-        const newCoord = yCoord - deltaCooord;
-        const yCoordMin = 0;
-
-        if (yCoord > yCoordMin) {
-          const timerFallGoing = setTimeout(() => {
-            if (refCat != null && refCat.current != null) {
-              refCat.current.style.transform = `translateY(-${newCoord}px`;
-              refCat.current.style.transitionDuration = `20ms`;
-              console.log(currStepCoord);
-              dispatch({ type: "fallGoing", payload: newCoord });
-            }
-          }, 20);
-          return (): void => {
-            clearTimeout(timerFallGoing);
-          };
-        } else
-          dispatch({
-            type: "endOfFall",
-          });
-      } */
