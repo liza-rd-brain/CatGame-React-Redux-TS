@@ -11,7 +11,10 @@ function run(action: Action, state: State): State {
             gameState: "gameStarted.jump",
           };
         case "bottom": {
-          return state;
+          return {
+            ...state,
+            gameState: "gameStarted.fall",
+          };
         }
       }
     }

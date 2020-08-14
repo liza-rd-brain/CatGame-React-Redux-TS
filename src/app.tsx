@@ -32,6 +32,10 @@ export const duration = 350;
 export const heightY = 50;
 export const addJumpHeight = 30;
 export const levelNumber = 6;
+const levelWithCat = 2;
+/*4-потом домики!! */
+const levelWithGroung = [0, 2, 4];
+
 /* export const levelList = [0, 1, 2, 3, 4, 5]; */
 
 export type MoveDirection = "top" | "bottom";
@@ -59,9 +63,15 @@ export type Action =
 export type CatMove = "jump" | "doubleJump" | "fall" | "run";
 
 export type LevelItem = {
+  name: "empty" | "ground";
   startCoord: number;
   endCoord: number;
-  cat?: string;
+  cat?: CatItem;
+};
+
+export type CatItem = {
+  y: number;
+  /* health: number; */
 };
 
 export type GameLevelList = Map<string, LevelItem>;
@@ -71,6 +81,7 @@ export type State = {
   /*пока y вынесен, потом убрать в кота */
   y: number;
   levelList: GameLevelList;
+  levelOfMove: number;
 
   /*health
    */
@@ -79,8 +90,9 @@ export type State = {
 const getInitialState = (): State => {
   return {
     gameState: "waitingStart",
-    y: 0,
+    y: 100,
     levelList: getLevelList(),
+    levelOfMove: levelWithCat,
   };
 };
 
@@ -89,19 +101,39 @@ function getLevelList() {
 
   const levelList: GameLevelList = new Map();
   for (let i = 0; i < levelNumber; i++) {
-    const levelWithCat = 2;
-    switch (i) {
-      case levelWithCat: {
-        const objItem = {
-          startCoord: i * heightY,
-          endCoord: (i + 1) * heightY,
-          cat: "cat",
-        };
-        levelList.set(`${i}`, objItem);
+    const groundLevel = levelWithGroung.some((item) => {
+      return item === i;
+    });
+    switch (groundLevel) {
+      case true: {
+        switch (i) {
+          case levelWithCat: {
+            const objItem: LevelItem = {
+              name: "ground",
+              startCoord: i * heightY,
+              endCoord: (i + 1) * heightY,
+              cat: {
+                y: i * heightY,
+              },
+            };
+            levelList.set(`${i}`, objItem);
+            break;
+          }
+          default: {
+            const objItem: LevelItem = {
+              name: "ground",
+              startCoord: i * heightY,
+              endCoord: (i + 1) * heightY,
+            };
+            levelList.set(`${i}`, objItem);
+            break;
+          }
+        }
         break;
       }
-      default: {
-        const objItem = {
+      case false: {
+        const objItem: LevelItem = {
+          name: "empty",
           startCoord: i * heightY,
           endCoord: (i + 1) * heightY,
         };
@@ -110,6 +142,7 @@ function getLevelList() {
       }
     }
   }
+  console.log(levelList);
   return levelList;
 }
 
@@ -130,10 +163,10 @@ const reducer = (state = getInitialState(), action: Action): State => {
         case "jumpGoing": {
           return jump(action, state);
         }
-
         case "fall": {
           return fall(action, state);
         }
+
         default:
           return state;
       }
@@ -149,67 +182,83 @@ const reducer = (state = getInitialState(), action: Action): State => {
 } */
 
 function App() {
-  let [gameState, yCoord] = useSelector((state: State) => [
+  let [
+    gameState,
+    levelList,
+    yCoord,
+    levelOfMove,
+  ] = useSelector((state: State) => [
     state.gameState,
+    state.levelList,
     state.y,
+    state.levelOfMove,
   ]);
   const dispatch = useDispatch();
 
-  const deltaCooord = ((heightY + addJumpHeight / 2) * 20) / duration;
+  const deltaCooord = (heightY * 20) / duration;
 
   useEffect(() => {
     switch (gameState) {
       case "gameStarted.jump": {
-        let currStepCoord = yCoord + deltaCooord;
-        const yCoordMax = heightY + addJumpHeight;
-        if (yCoord < yCoordMax - deltaCooord) {
-          const timerJumpGoing = setTimeout(() => {
-            if (refCat != null && refCat.current != null) {
-              refCat.current.style.transform = `translateY(-${currStepCoord}px`;
-              refCat.current.style.transitionDuration = `20ms`;
-              console.log(currStepCoord);
-              dispatch({ type: "jumpGoing", payload: currStepCoord });
-            }
-          }, 20);
-          return (): void => {
-            clearTimeout(timerJumpGoing);
-          };
-        } else
-          dispatch({
-            type: "endOfJump",
-          });
+        const levelItem = levelList.get(`${levelOfMove}`);
+        if (levelItem) {
+          const startCoord = levelItem.startCoord;
+          const endCoord = levelItem.endCoord;
+          const currStepCoord = ((yCoord - startCoord + deltaCooord) * 3) / 2;
+          if (yCoord < endCoord) {
+            const timerJumpGoing = setTimeout(() => {
+              if (refCat != null && refCat.current != null) {
+                refCat.current.style.transform = `translateY(-${currStepCoord}px`;
+                refCat.current.style.transitionDuration = `20ms`;
+
+                const newYCoord = deltaCooord + yCoord;
+                console.log("jump", currStepCoord);
+                console.log("newYCoord", newYCoord);
+                dispatch({ type: "jumpGoing", payload: newYCoord });
+              }
+            }, 20);
+            return (): void => {
+              clearTimeout(timerJumpGoing);
+            };
+          } else
+            dispatch({
+              type: "endOfJump",
+            });
+        }
       }
-
       case "gameStarted.fall": {
-        const currStepCoord = yCoord - deltaCooord;
-        const newCoord = yCoord - deltaCooord;
-        const yCoordMin = 0;
-
-        if (yCoord > yCoordMin) {
-          const timerFallGoing = setTimeout(() => {
-            if (refCat != null && refCat.current != null) {
-              refCat.current.style.transform = `translateY(-${newCoord}px`;
-              refCat.current.style.transitionDuration = `20ms`;
-              console.log(currStepCoord);
-              dispatch({ type: "fallGoing", payload: newCoord });
-            }
-          }, 20);
-          return (): void => {
-            clearTimeout(timerFallGoing);
-          };
-        } else
-          dispatch({
-            type: "endOfFall",
-          });
+        const levelItem = levelList.get(`${levelOfMove}`);
+        if (levelItem) {
+          const startCoord = levelItem.startCoord;
+          const endCoord = levelItem.endCoord;
+          const currStepCoord = ((yCoord - startCoord) * 3) / 2;
+          if (yCoord > startCoord) {
+            const timerFallGoing = setTimeout(() => {
+              if (refCat != null && refCat.current != null) {
+                refCat.current.style.transform = `translateY(-${currStepCoord}px`;
+                refCat.current.style.transitionDuration = `20ms`;
+                const newYCoord = yCoord - deltaCooord;
+                console.log("fall", currStepCoord);
+                console.log("newYCoord", newYCoord);
+                dispatch({ type: "fallGoing", payload: newYCoord });
+              }
+            }, 20);
+            return (): void => {
+              clearTimeout(timerFallGoing);
+            };
+          } else
+            dispatch({
+              type: "endOfFall",
+            });
+        }
       }
 
       default:
         break;
     }
-  }, [gameState, yCoord]);
+  }, [gameState, levelList, yCoord]);
 
   const refCat = useRef<HTMLDivElement>(null);
-  /*   console.log(refCat); */
 
   const getGameScreen = () => {
     switch (gameState) {
@@ -219,7 +268,6 @@ function App() {
       default:
         return (
           <>
-            {/* <Cat ref={refCat} /> */}
             <Grid refItem={refCat} />
             <Arrows />
           </>
@@ -241,3 +289,47 @@ ReactDOM.render(
   </Provider>,
   document.querySelector("#root")
 );
+
+/* 
+        let currStepCoord = yCoord + deltaCooord;
+        const yCoordMax = heightY + addJumpHeight;
+        if (yCoord < yCoordMax - deltaCooord) {
+          const timerJumpGoing = setTimeout(() => {
+            if (refCat != null && refCat.current != null) {
+              refCat.current.style.transform = `translateY(-${currStepCoord}px`;
+              refCat.current.style.transitionDuration = `20ms`;
+              console.log(currStepCoord);
+              dispatch({ type: "jumpGoing", payload: currStepCoord });
+            }
+          }, 20);
+          return (): void => {
+            clearTimeout(timerJumpGoing);
+          };
+        } else
+          dispatch({
+            type: "endOfJump",
+          });
+      } */
+/*полет до ближайшего ground уровня */
+/*  case "gameStarted.fall": {
+        const currStepCoord = yCoord - deltaCooord;
+        const newCoord = yCoord - deltaCooord;
+        const yCoordMin = 0;
+
+        if (yCoord > yCoordMin) {
+          const timerFallGoing = setTimeout(() => {
+            if (refCat != null && refCat.current != null) {
+              refCat.current.style.transform = `translateY(-${newCoord}px`;
+              refCat.current.style.transitionDuration = `20ms`;
+              console.log(currStepCoord);
+              dispatch({ type: "fallGoing", payload: newCoord });
+            }
+          }, 20);
+          return (): void => {
+            clearTimeout(timerFallGoing);
+          };
+        } else
+          dispatch({
+            type: "endOfFall",
+          });
+      } */

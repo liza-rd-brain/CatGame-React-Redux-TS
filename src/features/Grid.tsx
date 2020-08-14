@@ -6,9 +6,18 @@ import { State, GameLevelList, LevelItem } from "./../app";
 
 const GridItem = styled.div``;
 
-const Level = styled.div`
+type LevelName = {
+  name: string;
+};
+
+const Level = styled.div<LevelName>`
   height: 50px;
-  border-bottom: 1px solid black;
+
+  border-bottom: ${(props) => {
+    if (props.name === "ground") {
+      return "2px solid black";
+    } else return "1px dotted gray";
+  }};
   position: relative;
 `;
 
@@ -22,14 +31,14 @@ const getGameGrid = (levelList: GameLevelList, ref: any) => {
     switch (levelHasCat) {
       case true: {
         return (
-          <Level>
+          <Level name={levelItem.name}>
             <Cat ref={ref} />
             {index}
           </Level>
         );
       }
       case false: {
-        return <Level>{index}</Level>;
+        return <Level name={levelItem.name}>{index}</Level>;
       }
     }
   });
