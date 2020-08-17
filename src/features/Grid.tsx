@@ -8,11 +8,14 @@ const GridItem = styled.div``;
 
 type LevelName = {
   name: string;
+  levelHeight: number;
 };
 
 const Level = styled.div<LevelName>`
-  height: 50px;
-
+  /* height: 50px; */
+  height: ${(props) => {
+    return `${props.levelHeight}px`;
+  }};
   border-bottom: ${(props) => {
     if (props.name === "ground") {
       return "2px solid black";
@@ -21,7 +24,11 @@ const Level = styled.div<LevelName>`
   position: relative;
 `;
 
-const getGameGrid = (levelList: GameLevelList, ref: any) => {
+const getGameGrid = (
+  levelList: GameLevelList,
+  ref: any,
+  levelHeight: number
+) => {
   const gridArray = Array.from(levelList).reverse();
   /*  console.log(gridArray); */
   return gridArray.map((item: [string, Level]) => {
@@ -32,14 +39,18 @@ const getGameGrid = (levelList: GameLevelList, ref: any) => {
     switch (levelHasCat) {
       case true: {
         return (
-          <Level name={level.name}>
+          <Level name={level.name} levelHeight={levelHeight}>
             <Cat ref={ref} />
             {index}
           </Level>
         );
       }
       case false: {
-        return <Level name={level.name}>{index}</Level>;
+        return (
+          <Level name={level.name} levelHeight={levelHeight}>
+            {index}
+          </Level>
+        );
       }
     }
   });
@@ -49,7 +60,7 @@ function Grid(props: any) {
   const [levelList] = useSelector((state: State) => [state.levelList]);
   return (
     <GridItem>
-      {getGameGrid(levelList, props.refItem)}
+      {getGameGrid(levelList, props.refItem, props.levelHeight)}
       {/* <Cat ref={props.refItem} /> */}
     </GridItem>
   );

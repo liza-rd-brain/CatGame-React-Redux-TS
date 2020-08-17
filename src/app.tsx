@@ -21,7 +21,7 @@ import fall from "./phases/gameStarted/fall";
 const Field = styled.div`
   position: relative;
   width: 600px;
-  height: 500px;
+  height: 800px;
   margin: 0 auto;
   border: 1px solid black;
   display: flex;
@@ -29,7 +29,8 @@ const Field = styled.div`
 `;
 
 export const duration = 300;
-export const heightLevel = 50;
+export const levelHeight = 80;
+export const catHeight = 25;
 export const addJumpHeight = 30;
 export const levelNumber = 6;
 const levelWithCat = 2;
@@ -54,6 +55,7 @@ export type Action =
   | { type: "arrowPressed"; payload: MoveDirection }
   | { type: "jumpStarted" }
   | { type: "jumpGoing"; payload: number }
+  | { type: "switchLevel" }
   | { type: "fallGoing"; payload: number }
   | { type: "endOfJump" /*  payload: number */ }
   | { type: "endOfFall" /* payload: number */ }
@@ -114,11 +116,11 @@ function getLevelList() {
           case levelWithCat: {
             const objItem: Level = {
               name: "ground",
-              startCoord: i * heightLevel,
-              endCoord: (i + 1) * heightLevel,
+              startCoord: i * levelHeight,
+              endCoord: (i + 1) * levelHeight,
               levelItem: {
                 cat: {
-                  y: i * heightLevel,
+                  y: i * levelHeight,
                   health: 3,
                 },
               },
@@ -129,8 +131,8 @@ function getLevelList() {
           default: {
             const objItem: Level = {
               name: "ground",
-              startCoord: i * heightLevel,
-              endCoord: (i + 1) * heightLevel,
+              startCoord: i * levelHeight,
+              endCoord: (i + 1) * levelHeight,
               levelItem: {},
             };
             levelList.set(`${i}`, objItem);
@@ -142,8 +144,8 @@ function getLevelList() {
       case false: {
         const objItem: Level = {
           name: "empty",
-          startCoord: i * heightLevel,
-          endCoord: (i + 1) * heightLevel,
+          startCoord: i * levelHeight,
+          endCoord: (i + 1) * levelHeight,
           levelItem: {},
         };
         levelList.set(`${i}`, objItem);
@@ -209,8 +211,10 @@ function App() {
   ]);
   const dispatch = useDispatch();
 
-  const deltaCooord = ((heightLevel + addJumpHeight) * 20) / duration;
-  const levelItem = levelList.get(`${levelOfMove}`);
+  const deltaCooord = ((levelHeight + addJumpHeight) * 20) / duration;
+  const level = levelList.get(`${levelOfMove}`);
+  const currentYCoord =
+    level && level.levelItem.cat ? level.levelItem.cat?.y : 0;
   /*от изменения gameState рисуем анимацию  + дистпачим y
   сразу регулируем время прыжка!
   задаем через 3 секунды очищение setInterval*/
@@ -221,11 +225,11 @@ function App() {
     () => {
       switch (gameState) {
         case "gameStarted.jumpStarted": {
-          const makingJUmp = setInterval(() => console.log("test"), 200);
+          const makingJump = setInterval(() => console.log("test"), 200);
           dispatch({ type: "jumpStarted" });
           const endingJump = setTimeout(() => {
             console.log("endOfJump");
-            clearInterval(makingJUmp);
+            clearInterval(makingJump);
           }, 500);
           return (): void => {
             clearTimeout(endingJump);
@@ -244,18 +248,19 @@ function App() {
         if (levelItem) {
           const startCoord = levelItem.startCoord;
           let currCoord = deltaCooord;
-          const makingJUmp = setInterval(() => {
+          const makingJump = setInterval(() => {
             if (refCat != null && refCat.current != null) {
               refCat.current.style.transform = `translateY(-${currCoord}px`;
               refCat.current.style.transitionDuration = `20ms`;
               currCoord += deltaCooord;
               const newYCoord = currCoord + startCoord;
+              console.log("newYCoord", newYCoord);
               dispatch({ type: "jumpGoing", payload: newYCoord });
             }
           }, 20);
           const endingJump = setTimeout(() => {
             console.log("endOfJump");
-            clearInterval(makingJUmp);
+            clearInterval(makingJump);
           }, duration);
           return (): void => {
             clearTimeout(endingJump);
@@ -270,12 +275,23 @@ function App() {
   useEffect(() => {
     switch (gameState) {
       case "gameStarted.jumpStarted": {
-        const level = levelList.get(`${levelOfMove}`);
+        const levelItem = levelList.get(`${levelOfMove}`);
+        const startCoord = levelItem ? levelItem.startCoord : 0;
+        /*голова котика приподнята на catHeight над уровнем */
+        const catCrossLine =
+          currentYCoord + catHeight > startCoord + levelHeight &&
+          currentYCoord + catHeight < startCoord + levelHeight + deltaCooord;
+        if (catCrossLine) {
+          console.log(levelOfMove);
+          dispatch({
+            type: "switchLevel",
+          });
+        }
       }
       default:
         break;
     }
-  }, [yCoord]);
+  }, [currentYCoord]);
   useEffect(
     () => {
       switch (gameState) {
@@ -353,7 +369,7 @@ function App() {
       default:
         return (
           <>
-            <Grid refItem={refCat} />
+            <Grid refItem={refCat} levelHeight={levelHeight} />
             <Arrows />
           </>
         );

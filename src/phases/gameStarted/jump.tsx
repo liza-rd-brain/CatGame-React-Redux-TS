@@ -26,10 +26,18 @@ function jump(action: Action, state: State): State {
         levelList: newLevelList,
       };
     }
+    case "switchLevel": {
+      console.log("switch", state.levelOfMove + 1);
+
+      return {
+        ...state,
+        levelOfMove: state.levelOfMove + 1,
+      };
+    }
     case "endOfJump": {
       return {
         ...state,
-        gameState: "gameStarted.fall",
+        /*   gameState: "gameStarted.fall", */
         /* gameState: "gameStarted.run", */
         /*     y: action.payload, */
       };
