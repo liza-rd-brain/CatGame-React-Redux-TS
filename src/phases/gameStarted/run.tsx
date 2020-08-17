@@ -6,9 +6,14 @@ function run(action: Action, state: State): State {
       const direction = action.payload;
       switch (direction) {
         case "top":
-          return {
+          /* return {
             ...state,
             gameState: "gameStarted.jump",
+          }; */
+          return {
+            ...state,
+            gameState: "gameStarted.jumpStarted",
+            testAnimation: true,
           };
         case "bottom": {
           return {

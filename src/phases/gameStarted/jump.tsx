@@ -2,6 +2,12 @@ import { State, Action } from "../../app";
 
 function jump(action: Action, state: State): State {
   switch (action.type) {
+    case "jumpStarted": {
+      return {
+        ...state,
+        gameState: "gameStarted.jump",
+      };
+    }
     case "jumpGoing": {
       const levelOfMove = state.levelOfMove;
       const newLevelList = new Map(state.levelList);
