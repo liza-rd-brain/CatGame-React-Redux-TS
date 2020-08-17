@@ -2,7 +2,7 @@ import React from "react";
 import { useSelector, useDispatch } from "react-redux";
 import styled from "styled-components";
 import Cat from "./Cat";
-import { State, GameLevelList, LevelItem } from "./../app";
+import { State, GameLevelList, Level } from "./../app";
 
 const GridItem = styled.div``;
 
@@ -24,21 +24,22 @@ const Level = styled.div<LevelName>`
 const getGameGrid = (levelList: GameLevelList, ref: any) => {
   const gridArray = Array.from(levelList).reverse();
   /*  console.log(gridArray); */
-  return gridArray.map((level: [string, LevelItem]) => {
-    const index = level[0];
-    const levelItem = level[1];
-    const levelHasCat = levelItem.cat ? true : false;
+  return gridArray.map((item: [string, Level]) => {
+    const index = item[0];
+    const level = item[1];
+    const levelHasCat = level.levelItem.cat ? true : false;
+    /*  const levelHasCat = level.cat ? true : false; */
     switch (levelHasCat) {
       case true: {
         return (
-          <Level name={levelItem.name}>
+          <Level name={level.name}>
             <Cat ref={ref} />
             {index}
           </Level>
         );
       }
       case false: {
-        return <Level name={levelItem.name}>{index}</Level>;
+        return <Level name={level.name}>{index}</Level>;
       }
     }
   });

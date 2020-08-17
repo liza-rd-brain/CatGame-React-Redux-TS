@@ -12,13 +12,16 @@ function jump(action: Action, state: State): State {
       const levelOfMove = state.levelOfMove;
       const newLevelList = new Map(state.levelList);
       const catLevel = newLevelList.get(`${levelOfMove}`);
-      if (catLevel && catLevel.cat) {
-        catLevel.cat = { ...catLevel.cat, y: action.payload };
+
+      if (catLevel && catLevel.levelItem.cat) {
+        catLevel.levelItem = {
+          ...catLevel.levelItem,
+          cat: { ...catLevel.levelItem.cat, y: action.payload },
+        };
       }
-      /* console.log(catLevel); */
+      console.log(newLevelList);
       return {
         ...state,
-        /* gameState: "gameStarted.jump", */
         y: action.payload,
         levelList: newLevelList,
       };

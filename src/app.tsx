@@ -62,19 +62,21 @@ export type Action =
 
 export type CatMove = "jump" | "doubleJump" | "fall" | "run";
 
-export type LevelItem = {
+export type Level = {
   name: "empty" | "ground";
   startCoord: number;
   endCoord: number;
-  cat?: CatItem;
+  levelItem: { cat?: CatItem };
+  /*  cat?: CatItem; */
 };
 
 export type CatItem = {
   y: number;
+  health: number;
   /* health: number; */
 };
 
-export type GameLevelList = Map<string, LevelItem>;
+export type GameLevelList = Map<string, Level>;
 
 export type State = {
   gameState: GameState;
@@ -110,22 +112,26 @@ function getLevelList() {
       case true: {
         switch (i) {
           case levelWithCat: {
-            const objItem: LevelItem = {
+            const objItem: Level = {
               name: "ground",
               startCoord: i * heightLevel,
               endCoord: (i + 1) * heightLevel,
-              cat: {
-                y: i * heightLevel,
+              levelItem: {
+                cat: {
+                  y: i * heightLevel,
+                  health: 3,
+                },
               },
             };
             levelList.set(`${i}`, objItem);
             break;
           }
           default: {
-            const objItem: LevelItem = {
+            const objItem: Level = {
               name: "ground",
               startCoord: i * heightLevel,
               endCoord: (i + 1) * heightLevel,
+              levelItem: {},
             };
             levelList.set(`${i}`, objItem);
             break;
@@ -134,10 +140,11 @@ function getLevelList() {
         break;
       }
       case false: {
-        const objItem: LevelItem = {
+        const objItem: Level = {
           name: "empty",
           startCoord: i * heightLevel,
           endCoord: (i + 1) * heightLevel,
+          levelItem: {},
         };
         levelList.set(`${i}`, objItem);
         break;
@@ -263,10 +270,7 @@ function App() {
   useEffect(() => {
     switch (gameState) {
       case "gameStarted.jumpStarted": {
-        const levelItem = levelList.get(`${levelOfMove}`);
-        if (levelItem) {
-          const catCoord = levelItem.cat ? levelItem.cat.y : 0;
-        }
+        const level = levelList.get(`${levelOfMove}`);
       }
       default:
         break;
@@ -275,9 +279,9 @@ function App() {
   useEffect(
     () => {
       switch (gameState) {
-        case "gameStarted.jump": {
+        /*   case "gameStarted.jump": {
           const levelItem = levelList.get(`${levelOfMove}`);
-          /*переделать на switch-case */
+        
           if (levelItem) {
             const startCoord = levelItem.startCoord;
             const endCoord = levelItem.endCoord;
@@ -290,8 +294,7 @@ function App() {
                   refCat.current.style.transitionDuration = `20ms`;
 
                   const newYCoord = deltaCooord + catCoord;
-                  /*  console.log("jump", currCoord);
-                console.log("newYCoord", newYCoord); */
+              
                   dispatch({ type: "jumpGoing", payload: newYCoord });
                 }
               }, 20);
@@ -303,8 +306,8 @@ function App() {
                 type: "endOfJump",
               });
           }
-        }
-        case "gameStarted.fall": {
+        } */
+        /* case "gameStarted.fall": {
           const levelItem = levelList.get(`${levelOfMove}`);
           if (levelItem) {
             const startCoord = levelItem.startCoord;
@@ -329,7 +332,7 @@ function App() {
                 type: "endOfFall",
               });
           }
-        }
+        } */
 
         default:
           break;
