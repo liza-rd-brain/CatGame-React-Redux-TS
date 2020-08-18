@@ -4,7 +4,9 @@ import styled from "styled-components";
 import Cat from "./Cat";
 import { State, GameLevelList, Level } from "./../app";
 
-const GridItem = styled.div``;
+const GridItem = styled.div`
+  position: relative;
+`;
 
 type LevelName = {
   name: string;
@@ -21,7 +23,7 @@ const Level = styled.div<LevelName>`
       return "2px solid black";
     } else return "1px dotted gray";
   }};
-  position: relative;
+  /*  position: relative; */
 `;
 
 const getGameGrid = (
@@ -34,21 +36,23 @@ const getGameGrid = (
   return gridArray.map((item: [string, Level]) => {
     const index = item[0];
     const level = item[1];
+    const levelCoord = level.endCoord;
     const levelHasCat = level.levelItem.cat ? true : false;
     /*  const levelHasCat = level.cat ? true : false; */
     switch (levelHasCat) {
       case true: {
+        const catY = level.levelItem.cat ? level.levelItem.cat.y : 0;
         return (
           <Level name={level.name} levelHeight={levelHeight}>
-            <Cat ref={ref} />
-            {index}
+            <Cat ref={ref} y={catY} />
+            {`${index} - ${levelCoord}`}
           </Level>
         );
       }
       case false: {
         return (
           <Level name={level.name} levelHeight={levelHeight}>
-            {index}
+            {`${index} - ${levelCoord}`}
           </Level>
         );
       }
