@@ -19,13 +19,6 @@ const CatItem = styled.div<CatOnLevel>`
   bottom:  ${(props) => {
     return `${props.y}px`;
   }};
-  /* bottom: -15px; */
-  /* top: ${(props) => {
-    return `${0}px`;
-  }}; */
-  /*top будет меняться от Y */
-  /*  top: 235px; */
-  /*котик посередине*/
   left: 240px;
   background: url("../assets/cat_run.gif") no-repeat;
   background-size: 91px 50px;

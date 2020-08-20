@@ -28,10 +28,15 @@ const Field = styled.div`
   flex-direction: column;
 `;
 
-export const duration = 300; /*  750; */
+/*коэфицент кратности-?! */
+/* export const duration = 200;  */
+export const duration = 260; /*  750; */
+export const deltaDuration = 20;
+export const defaultDeltaCoord = 8;
+/* export const levelHeight = 70; */
 export const levelHeight = 80;
 export const catHeight = 25;
-export const addJumpHeight = 32;
+export const addJumpHeight = 24;
 export const levelNumber = 6;
 const levelWithCat = 2;
 /*4-потом домики!! */
@@ -204,34 +209,35 @@ function App() {
   const dispatch = useDispatch();
 
   const deltaCooord = Math.round(
-    ((levelHeight + addJumpHeight) * 20) / duration
+    ((levelHeight + addJumpHeight) * deltaDuration) / duration
   );
+  console.log(deltaCooord);
   const level = levelList.get(`${levelOfMove}`);
   const currentYCoord =
     level && level.levelItem.cat ? level.levelItem.cat?.y : 0;
 
+  /*done */
   useEffect(() => {
     switch (gameState) {
       case "gameStarted.jumpStarted": {
-        /*копировать, а не отдавать ссылку */
         const currLevelList = new Map(levelList);
         const levelItem = currLevelList.get(`${levelOfMove}`);
         if (levelItem) {
-          console.log("levelOfMove", levelOfMove);
           const startCoord = levelItem.startCoord;
-          let currCoord = deltaCooord;
+          let addCoord = deltaCooord;
           const makingJump = setInterval(() => {
             if (refCat != null && refCat.current != null) {
               refCat.current.style.transform = `translateY(-${deltaCooord}px`;
-              refCat.current.style.transitionDuration = `20ms`;
-              currCoord += deltaCooord;
-              const newYCoord = currCoord + startCoord;
+              refCat.current.style.transitionDuration = `${deltaDuration}ms`;
+
+              const newYCoord = addCoord + startCoord;
               console.log("newYCoord", newYCoord);
+              addCoord += deltaCooord;
               dispatch({ type: "jumpGoing", payload: newYCoord });
             }
-          }, 20);
+          }, deltaDuration);
           const endingJump = setTimeout(() => {
-            console.log("endOfJump");
+            console.log("endOfJump", levelList);
             dispatch({
               type: "endOfJump",
             });
@@ -255,19 +261,20 @@ function App() {
         if (levelItem) {
           /*падение прекращается, когда котик достиг такого Y, на котором - земля */
 
-          const startCoord = levelItem.startCoord + addJumpHeight;
-          let currCoord = deltaCooord;
+          const startCoord =
+            levelItem.endCoord /* startCoord */ + addJumpHeight;
+          let addCoord = 0;
 
           const makingFall = setInterval(() => {
             if (refCat != null && refCat.current != null) {
               refCat.current.style.transform = `translateY(${deltaCooord}px`;
-              refCat.current.style.transitionDuration = `20ms`;
-              currCoord += deltaCooord;
-              const newYCoord = startCoord - currCoord;
+              refCat.current.style.transitionDuration = `deltaDurationms`;
+              const newYCoord = startCoord - addCoord;
               console.log("newYCoordFall", newYCoord);
+              addCoord += deltaCooord;
               dispatch({ type: "fallGoing", payload: newYCoord });
             }
-          }, 20);
+          }, deltaDuration);
           const endingFall = setTimeout(() => {
             console.log("endOfFall");
             dispatch({
@@ -285,12 +292,12 @@ function App() {
     }
   }, [gameState /* currentYCoord */]);
 
-  useEffect(() => {
+  /*   useEffect(() => {
     switch (gameState) {
       case "gameStarted.jumpStarted": {
         const levelItem = levelList.get(`${levelOfMove}`);
         const startCoord = levelItem ? levelItem.startCoord : 0;
-        /*голова котика приподнята на catHeight над уровнем */
+        //голова котика приподнята на catHeight над уровнем
         const catCrossLine =
           currentYCoord + catHeight > startCoord + levelHeight &&
           currentYCoord + catHeight < startCoord + levelHeight + deltaCooord;
@@ -306,12 +313,12 @@ function App() {
       case "gameStarted.fall": {
         const levelItem = levelList.get(`${levelOfMove}`);
         const startCoord = levelItem
-          ? levelItem.startCoord /* + addJumpHeight */
+          ? levelItem.startCoord 
           : 0;
-        /*голова котика приподнята на catHeight над уровнем */
+        //голова котика приподнята на catHeight над уровнем
         const catCrossLine =
-          currentYCoord < startCoord /* - catHeight */ &&
-          currentYCoord > startCoord /* - catHeight */ - deltaCooord;
+          currentYCoord < startCoord &&
+          currentYCoord > startCoord  - deltaCooord;
         if (catCrossLine) {
           const catOnGroud = levelWithGroung.includes(levelOfMove);
 
@@ -339,7 +346,7 @@ function App() {
       default:
         break;
     }
-  }, [currentYCoord]);
+  }, [currentYCoord]); */
 
   const refCat = useRef<HTMLDivElement>(null);
 
