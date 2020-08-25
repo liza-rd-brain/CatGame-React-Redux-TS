@@ -5,7 +5,7 @@ function waitingStart(action: Action, state: State): State {
     case "clickStartButton": {
       return {
         ...state,
-        gameState: "gameStarted.run",
+        gameState: "gameStarted.running",
       };
     }
     default:

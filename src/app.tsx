@@ -4,15 +4,14 @@ import { Provider, useDispatch, useSelector } from "react-redux";
 import { createStore, compose } from "redux";
 import styled, { ThemeProvider } from "styled-components";
 
-import Cat from "./features/Cat";
 import Arrows from "./features/Arrows";
 import StartScreen from "./features/StartScreen";
 import Grid from "./features/Grid";
 
 import waitingStartPhase from "./phases/waitingStart";
-import run from "./phases/gameStarted/run";
-import jump from "./phases/gameStarted/jump";
-import fall from "./phases/gameStarted/fall";
+import running from "./phases/gameStarted/running";
+import jumping from "./phases/gameStarted/jumping";
+import falling from "./phases/gameStarted/falling";
 /*1. стартовый экран
 2. котик бежит и прыгает на белом фоне
 3. описать, спроектировать сущности и состояния
@@ -50,7 +49,12 @@ export type MoveDirection = "top" | "bottom";
 
 export type GameState =
   | "waitingStart"
-  | "gameStarted.run"
+  //
+  | "gameStarted.running"
+  | "gameStarted.jumpPreparing"
+  | "gameStarted.jumping"
+  | "gameStarted.grounding"
+  //
   | "gameStarted.jumpStarted"
   | "gameStarted.jump"
   | "gameStarted.jumpGoing"
@@ -62,14 +66,23 @@ export type GameState =
 export type Action =
   | { type: "clickStartButton" }
   | { type: "arrowPressed"; payload: MoveDirection }
-  | { type: "jumpStarted" }
+  | { type: "jumpStarted"; jumpEffectId: number }
+  | { type: "rised"; payload: number }
+  | { type: "falled"; payload: number }
+  | { type: "grounded" }
+  //
   | { type: "jumpGoing"; payload: number }
   | { type: "switchLevel" }
   | { type: "fallGoing"; payload: number }
-  | { type: "endOfJump" /*  payload: number */ }
-  | { type: "endOfFall" /* payload: number */ }
+  | { type: "endOfJump" }
+  | { type: "endOfFall" }
   | { type: "catfFall" }
   | { type: "catDoubleJump" };
+
+export type KindEffect =
+  | { kind: "!prepare-jump" }
+  | { kind: "!ground"; jumpEffectId: number | null }
+  | null;
 
 export type CatMove = "jump" | "doubleJump" | "fall" | "run";
 
@@ -78,36 +91,32 @@ export type Level = {
   startCoord: number;
   endCoord: number;
   levelItem: { cat?: CatItem };
-  /*  cat?: CatItem; */
 };
 
 export type CatItem = {
   y: number;
   health: number;
-  /* health: number; */
 };
 
 export type GameLevelList = Map<string, Level>;
 
 export type State = {
   gameState: GameState;
-  /*пока y вынесен, потом убрать в кота */
+  jumpEffectId: number | null;
   y: number;
   levelList: GameLevelList;
   levelOfMove: number;
-  testAnimation: Boolean;
-
-  /*health
-   */
+  doEffect: KindEffect;
 };
 
 const getInitialState = (): State => {
   return {
     gameState: "waitingStart",
+    jumpEffectId: null,
     y: 100,
     levelList: getLevelList(),
     levelOfMove: levelWithCat,
-    testAnimation: false,
+    doEffect: null,
   };
 };
 
@@ -174,17 +183,27 @@ const reducer = (state = getInitialState(), action: Action): State => {
     }
     case "gameStarted": {
       switch (phaseInner) {
-        case "run": {
-          return run(action, state);
+        case "running": {
+          return running(action, state);
         }
+
+        case "jumpPreparing": {
+          return jumping(action, state);
+        }
+        case "jumping": {
+          return jumping(action, state);
+        }
+        case "grounding":
+          return falling(action, state);
+
         case "jumpStarted": {
-          return jump(action, state);
+          return jumping(action, state);
         }
         case "jumpGoing": {
-          return jump(action, state);
+          return jumping(action, state);
         }
         case "fall": {
-          return fall(action, state);
+          return falling(action, state);
         }
         default:
           return state;
@@ -196,18 +215,21 @@ const reducer = (state = getInitialState(), action: Action): State => {
   }
 };
 
-/* function getDeltaCoord(startCoord, endCoord, time) {
-  return (endCoord - startCoord) / time;
-} */
-
 function App() {
-  let [gameState, levelList, levelOfMove] = useSelector((state: State) => [
+  let [
+    gameState,
+    levelList,
+    levelOfMove,
+    doEffect,
+    jumpEffectId,
+  ] = useSelector((state: State) => [
     state.gameState,
     state.levelList,
     state.levelOfMove,
+    state.doEffect,
+    state.jumpEffectId,
   ]);
   const dispatch = useDispatch();
-
   const deltaCooord = Math.round(
     ((levelHeight + addJumpHeight) * deltaDuration) / duration
   );
@@ -216,137 +238,143 @@ function App() {
   const currentYCoord =
     level && level.levelItem.cat ? level.levelItem.cat?.y : 0;
 
-  /*done */
   useEffect(() => {
-    switch (gameState) {
-      case "gameStarted.jumpStarted": {
-        const currLevelList = new Map(levelList);
-        const levelItem = currLevelList.get(`${levelOfMove}`);
-        if (levelItem) {
-          const startCoord = levelItem.startCoord;
-          let addCoord = deltaCooord;
-          const makingJump = setInterval(() => {
-            if (refCat != null && refCat.current != null) {
-              refCat.current.style.transform = `translateY(-${deltaCooord}px`;
-              refCat.current.style.transitionDuration = `${deltaDuration}ms`;
+    switch (doEffect?.kind) {
+      case "!prepare-jump":
+        {
+          // докуда прыгает
+          const risingTo = 100;
+          const risingTime = 0.2 * 1000;
+          const tickTime = 10;
 
-              const newYCoord = addCoord + startCoord;
-              console.log("newYCoord", newYCoord);
-              addCoord += deltaCooord;
-              dispatch({ type: "jumpGoing", payload: newYCoord });
+          const riseTicks = risingTime / tickTime;
+          const riseInc = risingTo / riseTicks;
+
+          // let Y = state.Y;
+          let tickTracker = 0;
+
+          const jumpEffectId = setInterval(function riseAndFall() {
+            tickTracker += 1;
+
+            switch (true) {
+              // rised
+              case tickTracker < riseTicks:
+                dispatch({
+                  type: "rised",
+                  payload: riseInc,
+                });
+                break;
+
+              // falled
+              default:
+                dispatch({
+                  type: "falled",
+                  payload: riseInc * (tickTracker - riseTicks) * 0.4,
+                });
+                break;
             }
-          }, deltaDuration);
-          const endingJump = setTimeout(() => {
-            console.log("endOfJump", levelList);
-            dispatch({
-              type: "endOfJump",
-            });
-            clearInterval(makingJump);
-          }, duration);
-          return (): void => {
-            clearTimeout(endingJump);
-          };
+          }, tickTime);
+
+          dispatch({ type: "jumpStarted", jumpEffectId });
         }
-      }
-      default:
         break;
+      case "!ground": {
+        clearInterval(doEffect.jumpEffectId || 0);
+        dispatch({ type: "grounded" });
+        break;
+      }
     }
-  }, [gameState]);
+  }, [doEffect]);
 
-  /*падение */
-  useEffect(() => {
-    switch (gameState) {
-      case "gameStarted.fall": {
-        const levelItem = levelList.get(`${levelOfMove}`);
-        if (levelItem) {
-          /*падение прекращается, когда котик достиг такого Y, на котором - земля */
+  useEffect(
+    () => {
+      switch (gameState) {
+        case "gameStarted.jumpStarted": {
+          const currLevelList = new Map(levelList);
+          const levelItem = currLevelList.get(`${levelOfMove}`);
+          if (levelItem) {
+            const startCoord = levelItem.startCoord;
+            let addCoord = deltaCooord;
+            const makingJump = setInterval(() => {
+              if (refCat != null && refCat.current != null) {
+                refCat.current.style.transform = `translateY(-${deltaCooord}px`;
+                refCat.current.style.transitionDuration = `${deltaDuration}ms`;
 
-          const startCoord =
-            levelItem.endCoord /* startCoord */ + addJumpHeight;
-          let addCoord = 0;
-
-          const makingFall = setInterval(() => {
-            if (refCat != null && refCat.current != null) {
-              refCat.current.style.transform = `translateY(${deltaCooord}px`;
-              refCat.current.style.transitionDuration = `deltaDurationms`;
-              const newYCoord = startCoord - addCoord;
-              console.log("newYCoordFall", newYCoord);
-              addCoord += deltaCooord;
-              dispatch({ type: "fallGoing", payload: newYCoord });
-            }
-          }, deltaDuration);
-          const endingFall = setTimeout(() => {
-            console.log("endOfFall");
-            dispatch({
-              type: "endOfFall",
-            });
-            clearInterval(makingFall);
-          }, duration);
-          return (): void => {
-            clearTimeout(endingFall);
-          };
+                const newYCoord = addCoord + startCoord;
+                console.log("newYCoord", newYCoord);
+                addCoord += deltaCooord;
+                dispatch({ type: "jumpGoing", payload: newYCoord });
+              }
+            }, deltaDuration);
+            const endingJump = setTimeout(() => {
+              console.log("endOfJump", levelList);
+              dispatch({
+                type: "endOfJump",
+              });
+              clearInterval(makingJump);
+            }, duration);
+            return (): void => {
+              clearTimeout(endingJump);
+            };
+          }
         }
+        default:
+          break;
       }
-      default:
-        break;
-    }
-  }, [gameState /* currentYCoord */]);
+    } /*  [gameState] */
+  );
 
-  /*   useEffect(() => {
-    switch (gameState) {
-      case "gameStarted.jumpStarted": {
-        const levelItem = levelList.get(`${levelOfMove}`);
-        const startCoord = levelItem ? levelItem.startCoord : 0;
-        //голова котика приподнята на catHeight над уровнем
-        const catCrossLine =
-          currentYCoord + catHeight > startCoord + levelHeight &&
-          currentYCoord + catHeight < startCoord + levelHeight + deltaCooord;
-        if (catCrossLine) {
-          console.log(levelOfMove);
-          dispatch({
-            type: "switchLevel",
-          });
-        }
-        break;
-      }
+  useEffect(
+    () => {
+      switch (gameState) {
+        case "gameStarted.fall": {
+          const levelItem = levelList.get(`${levelOfMove}`);
+          if (levelItem) {
+            /*падение прекращается, когда котик достиг такого Y, на котором - земля */
 
-      case "gameStarted.fall": {
-        const levelItem = levelList.get(`${levelOfMove}`);
-        const startCoord = levelItem
-          ? levelItem.startCoord 
-          : 0;
-        //голова котика приподнята на catHeight над уровнем
-        const catCrossLine =
-          currentYCoord < startCoord &&
-          currentYCoord > startCoord  - deltaCooord;
-        if (catCrossLine) {
-          const catOnGroud = levelWithGroung.includes(levelOfMove);
+            const startCoord =
+              levelItem.endCoord /* startCoord */ + addJumpHeight;
+            let addCoord = 0;
 
-          console.log(`currentYCoord:${currentYCoord},
-          startCoord:${startCoord},
-          deltaCooord:${deltaCooord}
-          `);
-          console.log(levelOfMove);
-          dispatch({
-            type: "switchLevel",
-          });
-          switch (true) {
-            case catOnGroud: {
+            const makingFall = setInterval(() => {
+              if (refCat != null && refCat.current != null) {
+                refCat.current.style.transform = `translateY(${deltaCooord}px`;
+                refCat.current.style.transitionDuration = `deltaDurationms`;
+                const newYCoord = startCoord - addCoord;
+                console.log("newYCoordFall", newYCoord);
+                addCoord += deltaCooord;
+                dispatch({ type: "fallGoing", payload: newYCoord });
+              }
+            }, deltaDuration);
+            const endingFall = setTimeout(() => {
+              console.log("endOfFall");
               dispatch({
                 type: "endOfFall",
               });
-            }
-            case !catOnGroud: {
-              break;
-            }
+              clearInterval(makingFall);
+            }, duration);
+            return (): void => {
+              clearTimeout(endingFall);
+            };
           }
         }
-        break;
+        default:
+          break;
       }
-      default:
-        break;
-    }
-  }, [currentYCoord]); */
+    } /*  [gameState ] */
+  );
+
+  const effectRef = React.useRef<number | null>(null);
+  effectRef.current = jumpEffectId;
+  React.useEffect(function onMount() {
+    // do once when mounted
+    console.log("mount");
+    return function onUnMount() {
+      // do once when un-mounted
+      console.log("unmount");
+      clearInterval(effectRef.current || 0);
+    };
+  }, []);
 
   const refCat = useRef<HTMLDivElement>(null);
 

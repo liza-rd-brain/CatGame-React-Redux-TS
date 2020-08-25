@@ -1,45 +1,39 @@
 import { State, Action } from "../../app";
 
-function jump(action: Action, state: State): State {
+function falling(action: Action, state: State): State {
   switch (action.type) {
-    case "jumpStarted": {
+    case "grounded": {
       return {
         ...state,
-        gameState: "gameStarted.jump",
+        gameState: "gameStarted.running",
+        doEffect: null,
+        jumpEffectId: null,
       };
     }
-    case "jumpGoing": {
+    case "fallGoing": {
       const levelOfMove = state.levelOfMove;
       const newLevelList = new Map(state.levelList);
-
       const catLevel = newLevelList.get(`${levelOfMove}`);
-
       if (catLevel && catLevel.levelItem.cat) {
-        const newCatLevel = {
-          ...catLevel,
-          levelItem: {
-            ...catLevel.levelItem,
-            cat: { ...catLevel.levelItem.cat, y: action.payload },
-          },
+        catLevel.levelItem = {
+          ...catLevel.levelItem,
+          cat: { ...catLevel.levelItem.cat, y: action.payload },
         };
-        newLevelList.set(`${levelOfMove}`, newCatLevel);
-
-        return {
-          ...state,
-          y: action.payload,
-          levelList: newLevelList,
-        };
-      } else return state;
-      
+      }
+      return {
+        ...state,
+        y: action.payload,
+        levelList: newLevelList,
+      };
     }
     case "switchLevel": {
-      console.log("switch", state.levelOfMove + 1);
+      console.log("switch", state.levelOfMove - 1);
 
       const levelOfMove = state.levelOfMove;
       const newLevelList = new Map(state.levelList);
 
       const prevCatLevel = newLevelList.get(`${levelOfMove}`);
-      const nextLevel = newLevelList.get(`${levelOfMove + 1}`);
+      const nextLevel = newLevelList.get(`${levelOfMove - 1}`);
 
       if (prevCatLevel && prevCatLevel.levelItem.cat && nextLevel) {
         const catItem = { ...prevCatLevel.levelItem.cat };
@@ -50,18 +44,19 @@ function jump(action: Action, state: State): State {
         delete prevCatLevel.levelItem.cat;
 
         newLevelList.set(`${levelOfMove}`, prevCatLevel);
-        newLevelList.set(`${levelOfMove + 1}`, newCatLevel);
+        newLevelList.set(`${levelOfMove - 1}`, newCatLevel);
         return {
           ...state,
-          levelOfMove: state.levelOfMove + 1,
+          levelOfMove: state.levelOfMove - 1,
           levelList: newLevelList,
         };
       } else return { ...state };
     }
-    case "endOfJump": {
+    case "endOfFall": {
+      console.log(state);
       return {
         ...state,
-        gameState: "gameStarted.fall",
+        gameState: "gameStarted.running",
       };
     }
     default:
@@ -69,4 +64,4 @@ function jump(action: Action, state: State): State {
   }
 }
 
-export default jump;
+export default falling;
