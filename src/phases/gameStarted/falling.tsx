@@ -2,70 +2,90 @@ import { State, Action } from "../../app";
 
 function falling(action: Action, state: State): State {
   switch (action.type) {
-    case "grounded": {
+    case "fallStarted": {
       return {
         ...state,
-        gameState: "gameStarted.running",
-        doEffect: null,
-        moveEffectId: null,
+        gameState: "gameStarted.falling",
+        moveEffectId: action.moveEffectId,
       };
     }
 
     case "falled": {
-      //
-      /* падение до тех пор,пока не встретим ground=>grounding */
-      break;
-    }
-    //
-    case "fallGoing": {
+      console.log(" need fall");
       const levelOfMove = state.levelOfMove;
       const newLevelList = new Map(state.levelList);
+      /* до тех пор пока catY  не станет мин*/
       const catLevel = newLevelList.get(`${levelOfMove}`);
+      const nextLevel = newLevelList.get(`${levelOfMove - 1}`) || 0;
       if (catLevel && catLevel.levelItem.cat) {
-        catLevel.levelItem = {
-          ...catLevel.levelItem,
-          cat: { ...catLevel.levelItem.cat, y: action.payload },
+        //minY - земля
+        const groundingLevel = catLevel.name === "ground";
+        const minY = catLevel.startCoord;
+        const catY = catLevel.levelItem.cat.y;
+        const needSwitchLevel = catY <= minY;
+        const startLevel = action.startLevel;
+        const isNotStartLevel = startLevel != levelOfMove;
+        const isBottomLevel = catY === 0;
+        console.log(startLevel);
+
+        const goingUnderGround =
+          isNotStartLevel && groundingLevel && catY <= minY;
+
+        if (goingUnderGround || isBottomLevel) {
+          return {
+            ...state,
+            gameState: "gameStarted.grounding",
+            doEffect: { kind: "!ground", moveEffectId: state.moveEffectId },
+          };
+        } else console.log(newLevelList);
+
+        let newCatLevel = {
+          ...catLevel,
+          levelItem: {
+            ...catLevel.levelItem,
+            cat: {
+              ...catLevel.levelItem.cat,
+              y: catLevel.levelItem.cat.y - action.payload,
+            },
+          },
         };
-      }
-      return {
-        ...state,
-        y: action.payload,
-        levelList: newLevelList,
-      };
+        newLevelList.set(`${levelOfMove}`, newCatLevel);
+
+        switch (true) {
+          case needSwitchLevel: {
+            if (nextLevel) {
+              console.log("switch fall");
+              const catItem = { ...newCatLevel.levelItem.cat };
+              newCatLevel = {
+                ...nextLevel,
+                levelItem: {
+                  ...nextLevel.levelItem,
+                  cat: {
+                    ...catItem,
+                  },
+                },
+              };
+              delete catLevel.levelItem.cat;
+              newLevelList.set(`${levelOfMove}`, catLevel);
+              newLevelList.set(`${levelOfMove - 1}`, newCatLevel);
+              console.log(newLevelList);
+              return {
+                ...state,
+                levelOfMove: state.levelOfMove - 1,
+                levelList: newLevelList,
+              };
+            }
+          }
+          case !needSwitchLevel: {
+            return {
+              ...state,
+              levelList: newLevelList,
+            };
+          }
+        }
+      } else return state;
     }
-    case "switchLevel": {
-      console.log("switch", state.levelOfMove - 1);
 
-      const levelOfMove = state.levelOfMove;
-      const newLevelList = new Map(state.levelList);
-
-      const prevCatLevel = newLevelList.get(`${levelOfMove}`);
-      const nextLevel = newLevelList.get(`${levelOfMove - 1}`);
-
-      if (prevCatLevel && prevCatLevel.levelItem.cat && nextLevel) {
-        const catItem = { ...prevCatLevel.levelItem.cat };
-        const newCatLevel = {
-          ...nextLevel,
-          levelItem: { ...nextLevel.levelItem, cat: catItem },
-        };
-        delete prevCatLevel.levelItem.cat;
-
-        newLevelList.set(`${levelOfMove}`, prevCatLevel);
-        newLevelList.set(`${levelOfMove - 1}`, newCatLevel);
-        return {
-          ...state,
-          levelOfMove: state.levelOfMove - 1,
-          levelList: newLevelList,
-        };
-      } else return { ...state };
-    }
-    case "endOfFall": {
-      console.log(state);
-      return {
-        ...state,
-        gameState: "gameStarted.running",
-      };
-    }
     default:
       return state;
   }
