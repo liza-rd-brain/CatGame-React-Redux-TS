@@ -28,8 +28,7 @@ const Field = styled.div`
 `;
 
 /*коэфицент кратности-?! */
-/* export const duration = 200;  */
-export const duration = 260; /*  750; */
+export const duration = 260 * 2; /*  750; */
 export const deltaDuration = 20;
 export const defaultDeltaCoord = 8;
 /* export const levelHeight = 70; */
@@ -54,6 +53,8 @@ export type GameState =
   | "gameStarted.jumpPreparing"
   | "gameStarted.jumping"
   | "gameStarted.grounding"
+  | "gameStarted.fallPreparing"
+
   //
   | "gameStarted.jumpStarted"
   | "gameStarted.jump"
@@ -66,7 +67,7 @@ export type GameState =
 export type Action =
   | { type: "clickStartButton" }
   | { type: "arrowPressed"; payload: MoveDirection }
-  | { type: "jumpStarted"; jumpEffectId: number }
+  | { type: "jumpStarted"; moveEffectId: number }
   | { type: "rised"; payload: number }
   | { type: "falled"; payload: number }
   | { type: "grounded" }
@@ -81,7 +82,8 @@ export type Action =
 
 export type KindEffect =
   | { kind: "!prepare-jump" }
-  | { kind: "!ground"; jumpEffectId: number | null }
+  | { kind: "!ground"; moveEffectId: number | null }
+  | { kind: "!prepare-fall" }
   | null;
 
 export type CatMove = "jump" | "doubleJump" | "fall" | "run";
@@ -102,7 +104,7 @@ export type GameLevelList = Map<string, Level>;
 
 export type State = {
   gameState: GameState;
-  jumpEffectId: number | null;
+  moveEffectId: number | null;
   y: number;
   levelList: GameLevelList;
   levelOfMove: number;
@@ -112,7 +114,7 @@ export type State = {
 const getInitialState = (): State => {
   return {
     gameState: "waitingStart",
-    jumpEffectId: null,
+    moveEffectId: null,
     y: 100,
     levelList: getLevelList(),
     levelOfMove: levelWithCat,
@@ -195,7 +197,10 @@ const reducer = (state = getInitialState(), action: Action): State => {
         }
         case "grounding":
           return falling(action, state);
-
+        case "fallPreparing": {
+          return falling(action, state);
+        }
+        //
         case "jumpStarted": {
           return jumping(action, state);
         }
@@ -221,13 +226,13 @@ function App() {
     levelList,
     levelOfMove,
     doEffect,
-    jumpEffectId,
+    moveEffectId,
   ] = useSelector((state: State) => [
     state.gameState,
     state.levelList,
     state.levelOfMove,
     state.doEffect,
-    state.jumpEffectId,
+    state.moveEffectId,
   ]);
   const dispatch = useDispatch();
   const deltaCooord = Math.round(
@@ -240,46 +245,65 @@ function App() {
 
   useEffect(() => {
     switch (doEffect?.kind) {
-      case "!prepare-jump":
-        {
-          // докуда прыгает
-          const risingTo = 100;
-          const risingTime = 0.2 * 1000;
-          const tickTime = 10;
+      case "!prepare-jump": {
+        // докуда прыгает
+        const risingTo = levelHeight + addJumpHeight;
+        const risingTime = duration;
+        const tickTime = deltaDuration;
+        const riseTicks = risingTime / tickTime;
+        const riseInc = risingTo / riseTicks;
 
-          const riseTicks = risingTime / tickTime;
-          const riseInc = risingTo / riseTicks;
+        let tickTracker = 0;
+        const moveEffectId = setInterval(function riseAndFall() {
+          tickTracker += 1;
 
-          // let Y = state.Y;
-          let tickTracker = 0;
+          switch (true) {
+            // rised
 
-          const jumpEffectId = setInterval(function riseAndFall() {
-            tickTracker += 1;
+            case tickTracker < riseTicks:
+              dispatch({
+                type: "rised",
+                payload: riseInc,
+              }); /*  */
+              break;
 
-            switch (true) {
-              // rised
-              case tickTracker < riseTicks:
-                dispatch({
-                  type: "rised",
-                  payload: riseInc,
-                });
-                break;
+            // falled
+            default:
+              /*  const dec: Number = riseInc * (tickTracker - riseTicks) * 0.4; */
+              const dec: Number = riseInc;
+              console.log("dec", dec);
+              dispatch({
+                type: "falled",
+                payload: dec,
+              });
+              break;
+          }
+        }, tickTime);
 
-              // falled
-              default:
-                dispatch({
-                  type: "falled",
-                  payload: riseInc * (tickTracker - riseTicks) * 0.4,
-                });
-                break;
-            }
-          }, tickTime);
-
-          dispatch({ type: "jumpStarted", jumpEffectId });
-        }
+        dispatch({ type: "jumpStarted", moveEffectId });
         break;
+      }
+
+      case "!prepare-fall": {
+        const fallingTo = levelHeight * 2;
+        const fallingTime = duration * 2;
+        const tickTime = deltaDuration;
+        const fallTicks = fallingTime / tickTime;
+        const fallInc = fallingTo / fallTicks;
+
+        let tickTracker = 0;
+        const moveEffectId = setInterval(() => {
+          tickTracker += 1;
+          switch (true) {
+            case tickTracker < fallTicks: {
+              dispatch({ type: "falled", payload: fallInc });
+            }
+          }
+        }, tickTime);
+        break;
+      }
       case "!ground": {
-        clearInterval(doEffect.jumpEffectId || 0);
+        clearInterval(doEffect.moveEffectId || 0);
         dispatch({ type: "grounded" });
         break;
       }
@@ -365,7 +389,7 @@ function App() {
   );
 
   const effectRef = React.useRef<number | null>(null);
-  effectRef.current = jumpEffectId;
+  effectRef.current = moveEffectId;
   React.useEffect(function onMount() {
     // do once when mounted
     console.log("mount");

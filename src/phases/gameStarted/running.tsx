@@ -11,12 +11,13 @@ function running(action: Action, state: State): State {
             gameState: "gameStarted.jumpPreparing",
             doEffect: { kind: "!prepare-jump" },
           };
-        /*  case "bottom": {
+        case "bottom": {
           return {
             ...state,
-            gameState: "gameStarted.fall",
+            gameState: "gameStarted.fallPreparing",
+            doEffect: { kind: "!prepare-fall" },
           };
-        } */
+        }
       }
     }
 

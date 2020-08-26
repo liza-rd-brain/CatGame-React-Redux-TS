@@ -7,9 +7,16 @@ function falling(action: Action, state: State): State {
         ...state,
         gameState: "gameStarted.running",
         doEffect: null,
-        jumpEffectId: null,
+        moveEffectId: null,
       };
     }
+
+    case "falled": {
+      //
+      /* падение до тех пор,пока не встретим ground=>grounding */
+      break;
+    }
+    //
     case "fallGoing": {
       const levelOfMove = state.levelOfMove;
       const newLevelList = new Map(state.levelList);
