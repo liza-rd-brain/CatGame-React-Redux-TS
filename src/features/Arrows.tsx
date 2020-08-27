@@ -50,7 +50,7 @@ function Arrows() {
       <Arrow
         direction={direction}
         onClick={() => {
-          dispatch({ type: "arrowPressed", payload: direction });
+          dispatch({ type: "jumpRequested", payload: direction });
         }}
       >
         &gt;

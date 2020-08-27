@@ -2,13 +2,32 @@ import { State, Action } from "../../app";
 import { Level } from "../../app";
 function jumping(action: Action, state: State): State {
   switch (action.type) {
+    case "jumpRequested": {
+      switch (action.payload) {
+        case "top": {
+          // если двойной прыжок запрошен, заново не запрашивать!!
+
+          return {
+            ...state,
+            doubleJumpRequested: true,
+          };
+        }
+
+        default: {
+          return state;
+        }
+      }
+    }
+
     case "jumpStarted": {
+      console.log(state.gameState);
       return {
         ...state,
         gameState: "gameStarted.jumping",
         moveEffectId: action.moveEffectId,
       };
     }
+
     case "rised": {
       const levelOfMove = state.levelOfMove;
       const newLevelList = new Map(state.levelList);
@@ -39,7 +58,7 @@ function jumping(action: Action, state: State): State {
 
           newLevelList.set(`${levelOfMove}`, catLevel);
           newLevelList.set(`${levelOfMove + 1}`, newCatLevel);
-          console.log(newLevelList);
+          /*     console.log(newLevelList); */
           return {
             ...state,
             levelOfMove: state.levelOfMove + 1,
@@ -61,10 +80,34 @@ function jumping(action: Action, state: State): State {
 
         return {
           ...state,
-
           levelList: newLevelList,
         };
       } else return state;
+    }
+    case "riseEnded": {
+      return {
+        ...state,
+        gameState: "gameStarted.endingJump",
+        doEffect: { kind: "!removeEffect", moveEffectId: state.moveEffectId },
+      };
+    }
+    case "effectRemoved": {
+      console.log("второй прыжок или падение");
+      if (state.doubleJumpRequested) {
+        console.log("запрошен двойной прыжок");
+        return {
+          ...state,
+          gameState: "gameStarted.doubleJumpPreparing",
+          doEffect: { kind: "!prepare-jump" },
+          doubleJumpRequested: false,
+        };
+      } else
+        return {
+          ...state,
+          gameState: "gameStarted.fallPreparing",
+          doEffect: { kind: "!prepare-fall" },
+        }; /* return state; */
+      /*else падаем*/
     }
 
     case "falled": {
@@ -86,9 +129,12 @@ function jumping(action: Action, state: State): State {
           return {
             ...state,
             gameState: "gameStarted.grounding",
-            doEffect: { kind: "!ground", moveEffectId: state.moveEffectId },
+            doEffect: {
+              kind: "!removeEffect",
+              moveEffectId: state.moveEffectId,
+            },
           };
-        } else console.log(newLevelList);
+        }
 
         let newCatLevel = {
           ...catLevel,
@@ -119,7 +165,7 @@ function jumping(action: Action, state: State): State {
               delete catLevel.levelItem.cat;
               newLevelList.set(`${levelOfMove}`, catLevel);
               newLevelList.set(`${levelOfMove - 1}`, newCatLevel);
-              console.log(newLevelList);
+              /*  console.log(newLevelList); */
               return {
                 ...state,
                 levelOfMove: state.levelOfMove - 1,

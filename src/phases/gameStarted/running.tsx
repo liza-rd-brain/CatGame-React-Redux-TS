@@ -2,7 +2,7 @@ import { State, Action } from "../../app";
 
 function running(action: Action, state: State): State {
   switch (action.type) {
-    case "arrowPressed": {
+    case "jumpRequested": {
       const direction = action.payload;
       switch (direction) {
         case "top":

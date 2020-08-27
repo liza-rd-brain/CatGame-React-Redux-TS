@@ -24,7 +24,9 @@ function falling(action: Action, state: State): State {
         const catY = catLevel.levelItem.cat.y;
         const needSwitchLevel = catY <= minY;
         const startLevel = action.startLevel;
-        const isNotStartLevel = startLevel != levelOfMove;
+        const startCatY = action.currCatY;
+        /*  const isNotStartLevel = startLevel != levelOfMove; */
+        const isNotStartLevel = startCatY != catY;
         const isBottomLevel = catY === 0;
         console.log(startLevel);
 
@@ -35,9 +37,12 @@ function falling(action: Action, state: State): State {
           return {
             ...state,
             gameState: "gameStarted.grounding",
-            doEffect: { kind: "!ground", moveEffectId: state.moveEffectId },
+            doEffect: {
+              kind: "!removeEffect",
+              moveEffectId: state.moveEffectId,
+            },
           };
-        } else console.log(newLevelList);
+        } /* else console.log(newLevelList); */
 
         let newCatLevel = {
           ...catLevel,
@@ -84,6 +89,14 @@ function falling(action: Action, state: State): State {
           }
         }
       } else return state;
+    }
+    case "effectRemoved": {
+      return {
+        ...state,
+        gameState: "gameStarted.running",
+        doEffect: null,
+        moveEffectId: null,
+      };
     }
 
     default:

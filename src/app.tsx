@@ -11,6 +11,7 @@ import Grid from "./features/Grid";
 import waitingStartPhase from "./phases/waitingStart";
 import running from "./phases/gameStarted/running";
 import jumping from "./phases/gameStarted/jumping";
+import doubleJumping from "./phases/gameStarted/doubleJumping";
 import falling from "./phases/gameStarted/falling";
 import grounding from "./phases/gameStarted/grounding";
 
@@ -30,7 +31,9 @@ const Field = styled.div`
 `;
 
 /*коэфицент кратности-?! */
-export const duration = 260; /*  750; */
+export const duration = 260; /*  * 2; */
+const durationFall = 200; /*  * 2; */
+/*  750; */
 export const deltaDuration = 20;
 export const defaultDeltaCoord = 8;
 /* export const levelHeight = 70; */
@@ -55,9 +58,14 @@ export type GameState =
   | "gameStarted.jumpPreparing"
   | "gameStarted.jumpStarted"
   | "gameStarted.jumping"
+  | "gameStarted.endingJump"
   | "gameStarted.grounding"
   | "gameStarted.fallPreparing"
   | "gameStarted.falling"
+  | "gameStarted.doubleJumpPreparing"
+  | "gameStarted.doubleJumping"
+  | "gameStarted.endingDoubleJump"
+
   //
   | "gameStarted.jumpStarted"
   | "gameStarted.jump"
@@ -69,12 +77,14 @@ export type GameState =
 
 export type Action =
   | { type: "clickStartButton" }
-  | { type: "arrowPressed"; payload: MoveDirection }
+  | { type: "jumpRequested"; payload: MoveDirection }
   | { type: "jumpStarted"; moveEffectId: number }
   | { type: "fallStarted"; moveEffectId: number }
   | { type: "rised"; payload: number }
-  | { type: "falled"; payload: number; startLevel: number }
+  | { type: "riseEnded" }
+  | { type: "falled"; payload: number; startLevel: number; currCatY: number }
   | { type: "grounded" }
+  | { type: "effectRemoved" }
   //
   | { type: "jumpGoing"; payload: number }
   | { type: "switchLevel" }
@@ -86,8 +96,9 @@ export type Action =
 
 export type KindEffect =
   | { kind: "!prepare-jump" }
+  | { kind: "!prepare-doubleJump" }
   | {
-      kind: "!ground";
+      kind: "!removeEffect";
       moveEffectId?: number | null;
       /*  moveEffectId?: number | null; */
     }
@@ -118,6 +129,7 @@ export type State = {
   levelList: GameLevelList;
   levelOfMove: number;
   doEffect: KindEffect;
+  doubleJumpRequested: Boolean;
 };
 
 const getInitialState = (): State => {
@@ -129,6 +141,7 @@ const getInitialState = (): State => {
     levelList: getLevelList(),
     levelOfMove: levelWithCat,
     doEffect: null,
+    doubleJumpRequested: false,
   };
 };
 
@@ -198,15 +211,27 @@ const reducer = (state = getInitialState(), action: Action): State => {
         case "running": {
           return running(action, state);
         }
-
         case "jumpPreparing": {
           return jumping(action, state);
         }
-        case "jumpStarted": {
-          return jumping(action, state);
+        case "doubleJumpPreparing": {
+          return doubleJumping(action, state);
         }
+        /* case "jumpStarted": {
+          return jumping(action, state);
+        } */
+
         case "jumping": {
           return jumping(action, state);
+        }
+        case "doubleJumping": {
+          return doubleJumping(action, state);
+        }
+        case "endingJump": {
+          return jumping(action, state);
+        }
+        case "endingDoubleJump": {
+          return doubleJumping(action, state);
         }
 
         case "fallPreparing": {
@@ -216,7 +241,7 @@ const reducer = (state = getInitialState(), action: Action): State => {
           return falling(action, state);
         }
         case "grounding":
-          return grounding(action, state);
+          return falling(action, state);
 
         default:
           return state;
@@ -278,12 +303,8 @@ function App() {
 
             // falled
             default:
-              /*  const dec: Number = riseInc * (tickTracker - riseTicks) * 0.4; */
-              const dec: Number = riseInc;
-              console.log("dec", dec);
               dispatch({
-                type: "falled",
-                payload: dec,
+                type: "riseEnded",
               });
               break;
           }
@@ -305,97 +326,21 @@ function App() {
             type: "falled",
             payload: fallInc,
             startLevel: levelOfMove,
+            currCatY: currentYCoord,
           });
         }, tickTime);
         dispatch({ type: "fallStarted", moveEffectId });
         break;
       }
-      case "!ground": {
+
+      case "!removeEffect": {
         clearInterval(doEffect.moveEffectId || 0);
-        clearInterval(doEffect.moveEffectId || 0);
-        dispatch({ type: "grounded" });
+        /* dispatch({ type: "grounded" }); */
+        dispatch({ type: "effectRemoved" });
         break;
       }
     }
   }, [doEffect]);
-
-  useEffect(
-    () => {
-      switch (gameState) {
-        case "gameStarted.jumpStarted": {
-          const currLevelList = new Map(levelList);
-          const levelItem = currLevelList.get(`${levelOfMove}`);
-          if (levelItem) {
-            const startCoord = levelItem.startCoord;
-            let addCoord = deltaCooord;
-            const makingJump = setInterval(() => {
-              if (refCat != null && refCat.current != null) {
-                refCat.current.style.transform = `translateY(-${deltaCooord}px`;
-                refCat.current.style.transitionDuration = `${deltaDuration}ms`;
-
-                const newYCoord = addCoord + startCoord;
-                console.log("newYCoord", newYCoord);
-                addCoord += deltaCooord;
-                dispatch({ type: "jumpGoing", payload: newYCoord });
-              }
-            }, deltaDuration);
-            const endingJump = setTimeout(() => {
-              console.log("endOfJump", levelList);
-              dispatch({
-                type: "endOfJump",
-              });
-              clearInterval(makingJump);
-            }, duration);
-            return (): void => {
-              clearTimeout(endingJump);
-            };
-          }
-        }
-        default:
-          break;
-      }
-    } /*  [gameState] */
-  );
-
-  useEffect(
-    () => {
-      switch (gameState) {
-        case "gameStarted.fall": {
-          const levelItem = levelList.get(`${levelOfMove}`);
-          if (levelItem) {
-            /*падение прекращается, когда котик достиг такого Y, на котором - земля */
-
-            const startCoord =
-              levelItem.endCoord /* startCoord */ + addJumpHeight;
-            let addCoord = 0;
-
-            const makingFall = setInterval(() => {
-              if (refCat != null && refCat.current != null) {
-                refCat.current.style.transform = `translateY(${deltaCooord}px`;
-                refCat.current.style.transitionDuration = `deltaDurationms`;
-                const newYCoord = startCoord - addCoord;
-                console.log("newYCoordFall", newYCoord);
-                addCoord += deltaCooord;
-                dispatch({ type: "fallGoing", payload: newYCoord });
-              }
-            }, deltaDuration);
-            const endingFall = setTimeout(() => {
-              console.log("endOfFall");
-              dispatch({
-                type: "endOfFall",
-              });
-              clearInterval(makingFall);
-            }, duration);
-            return (): void => {
-              clearTimeout(endingFall);
-            };
-          }
-        }
-        default:
-          break;
-      }
-    } /*  [gameState ] */
-  );
 
   const effectRefJump = React.useRef<number | null>(null);
   effectRefJump.current = moveEffectId;
