@@ -9,7 +9,7 @@ function jumping(action: Action, state: State): State {
 
           return {
             ...state,
-            doubleJumpRequested: true,
+            doubleJumpPossible: true,
           };
         }
 
@@ -93,13 +93,13 @@ function jumping(action: Action, state: State): State {
     }
     case "effectRemoved": {
       console.log("второй прыжок или падение");
-      if (state.doubleJumpRequested) {
+      if (state.doubleJumpPossible) {
         console.log("запрошен двойной прыжок");
         return {
           ...state,
           gameState: "gameStarted.doubleJumpPreparing",
           doEffect: { kind: "!prepare-jump" },
-          doubleJumpRequested: false,
+          doubleJumpPossible: false,
         };
       } else
         return {

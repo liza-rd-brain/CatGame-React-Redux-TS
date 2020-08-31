@@ -31,7 +31,7 @@ const Field = styled.div`
 `;
 
 /*коэфицент кратности-?! */
-export const duration = 260; /*  * 2; */
+export const duration = 260*1.5; /*  * 2; */
 const durationFall = 200; /*  * 2; */
 /*  750; */
 export const deltaDuration = 20;
@@ -40,7 +40,7 @@ export const defaultDeltaCoord = 8;
 export const levelHeight = 80;
 export const catHeight = 25;
 export const addJumpHeight = 24;
-export const levelNumber = 6;
+export const levelNumber = 7;
 const levelWithCat = 2;
 /*4-потом домики!! */
 const levelWithGroung = [0, 2, 4];
@@ -129,7 +129,7 @@ export type State = {
   levelList: GameLevelList;
   levelOfMove: number;
   doEffect: KindEffect;
-  doubleJumpRequested: Boolean;
+  doubleJumpPossible: Boolean;
 };
 
 const getInitialState = (): State => {
@@ -141,7 +141,7 @@ const getInitialState = (): State => {
     levelList: getLevelList(),
     levelOfMove: levelWithCat,
     doEffect: null,
-    doubleJumpRequested: false,
+    doubleJumpPossible: false,
   };
 };
 
@@ -254,25 +254,21 @@ const reducer = (state = getInitialState(), action: Action): State => {
 };
 
 function App() {
-  let [
+  const [
     gameState,
     levelList,
     levelOfMove,
     doEffect,
-    /*  moveEffectId, */
     moveEffectId,
   ] = useSelector((state: State) => [
     state.gameState,
     state.levelList,
     state.levelOfMove,
     state.doEffect,
-    /* state.moveEffectId, */
     state.moveEffectId,
   ]);
   const dispatch = useDispatch();
-  const deltaCooord = Math.round(
-    ((levelHeight + addJumpHeight) * deltaDuration) / duration
-  );
+  
   const level = levelList.get(`${levelOfMove}`);
   const currentYCoord =
     level && level.levelItem.cat ? level.levelItem.cat?.y : 0;
@@ -301,7 +297,6 @@ function App() {
               }); /*  */
               break;
 
-            // falled
             default:
               dispatch({
                 type: "riseEnded",
@@ -316,7 +311,7 @@ function App() {
 
       case "!prepare-fall": {
         const fallingTo = levelHeight;
-        const fallingTime = 200; /* duration */
+        const fallingTime = durationFall; 
         const tickTime = deltaDuration;
         const fallTicks = fallingTime / tickTime;
         const fallInc = fallingTo / fallTicks;

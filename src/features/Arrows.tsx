@@ -2,19 +2,37 @@ import React from "react";
 import { useDispatch, useSelector } from "react-redux";
 import styled from "styled-components";
 
-import { MoveDirection } from "./../app";
+import { MoveDirection, State, GameState } from "./../app";
 
 type ArrowProps = {
   direction: MoveDirection;
+  gameState: GameState;
 };
 
 const Arrow = styled.div<ArrowProps>`
   text-align: center;
   vertical-align: middle;
   border: 1px solid lightgrey;
+
   cursor: pointer;
   &:hover {
     color: pink;
+  }
+  &:after {
+    ${(props) => {
+      switch (props.gameState) {
+        case "gameStarted.jumping":
+          switch (props.direction) {
+            case "top":
+              return `content: '${">>"}'`;
+            default:
+              break;
+          }
+
+        default:
+          return `content: '${">"}'`;
+      }
+    }}/*  content: ">"; */
   }
   &:active {
     color: red;
@@ -43,17 +61,18 @@ const ArrowContainer = styled.div`
 `;
 
 function Arrows() {
+  const [gameState] = useSelector((state: State) => [state.gameState]);
   const dispatch = useDispatch();
-
   const renderArrow = (direction: MoveDirection) => {
     return (
       <Arrow
         direction={direction}
+        gameState={gameState}
         onClick={() => {
           dispatch({ type: "jumpRequested", payload: direction });
         }}
       >
-        &gt;
+        {/*    &gt; */}
       </Arrow>
     );
   };
