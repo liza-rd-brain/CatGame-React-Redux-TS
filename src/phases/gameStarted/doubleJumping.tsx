@@ -3,7 +3,7 @@ import { Level } from "../../app";
 function doubleJumping(action: Action, state: State): State {
   switch (action.type) {
     case "jumpStarted": {
-      console.log(state.gameState);
+      /* console.log(state.gameState); */
       return {
         ...state,
         gameState: "gameStarted.doubleJumping",
@@ -25,7 +25,7 @@ function doubleJumping(action: Action, state: State): State {
         const needSwitchLevel = catY >= maxY;
 
         if (needSwitchLevel) {
-          console.log("switch");
+         /*  console.log("switch"); */
           const catItem = { ...catLevel.levelItem.cat };
           const newCatLevel = {
             ...nextLevel,
@@ -71,16 +71,16 @@ function doubleJumping(action: Action, state: State): State {
       return {
         ...state,
         gameState: "gameStarted.endingDoubleJump",
-        doEffect: { kind: "!removeEffect", moveEffectId: state.moveEffectId },
+        doMoveEffect: { kind: "!removeEffect", moveEffectId: state.moveEffectId },
       };
     }
     case "effectRemoved": {
       /*отсюда нужно падать*/
-      console.log("второй прыжок закончен");
+     /*  console.log("второй прыжок закончен"); */
       return {
         ...state,
         gameState: "gameStarted.fallPreparing",
-        doEffect: { kind: "!prepare-fall" },
+        doMoveEffect: { kind: "!prepare-fall" },
       };
     }
 

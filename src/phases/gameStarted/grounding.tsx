@@ -7,7 +7,7 @@ function grounding(action: Action, state: State): State {
       return {
         ...state,
         gameState: "gameStarted.running",
-        doEffect: null,
+        doMoveEffect: null,
         moveEffectId: null,
       };
     }

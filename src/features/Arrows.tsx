@@ -32,7 +32,7 @@ const Arrow = styled.div<ArrowProps>`
         default:
           return `content: '${">"}'`;
       }
-    }}/*  content: ">"; */
+    }}
   }
   &:active {
     color: red;

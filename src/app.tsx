@@ -8,6 +8,7 @@ import Arrows from "./features/Arrows";
 import StartScreen from "./features/StartScreen";
 import Grid from "./features/Grid";
 
+import barrierRequesting from "./phases/gameStarted/barrierRequesting";
 import waitingStartPhase from "./phases/waitingStart";
 import running from "./phases/gameStarted/running";
 import jumping from "./phases/gameStarted/jumping";
@@ -31,7 +32,7 @@ const Field = styled.div`
 `;
 
 /*коэфицент кратности-?! */
-export const duration = 260*1.5; /*  * 2; */
+export const duration = 260 * 1.5; /*  * 2; */
 const durationFall = 200; /*  * 2; */
 /*  750; */
 export const deltaDuration = 20;
@@ -49,7 +50,14 @@ export type CatProps = {
   y: number;
 };
 
+export type BarrierProps = {
+  /*  y: number; */
+  x: number;
+};
+
 export type MoveDirection = "top" | "bottom";
+
+export type BarrierPhase = "waitingRequest" | "movingBarrier";
 
 export type GameState =
   | "waitingStart"
@@ -85,16 +93,17 @@ export type Action =
   | { type: "falled"; payload: number; startLevel: number; currCatY: number }
   | { type: "grounded" }
   | { type: "effectRemoved" }
-  //
   | { type: "jumpGoing"; payload: number }
   | { type: "switchLevel" }
   | { type: "fallGoing"; payload: number }
   | { type: "endOfJump" }
   | { type: "endOfFall" }
   | { type: "catfFall" }
-  | { type: "catDoubleJump" };
+  | { type: "catDoubleJump" }
+  | { type: "barrierRequested" }
+  | { type: "barrierMoved"; payload: number };
 
-export type KindEffect =
+export type KindMoveEffect =
   | { kind: "!prepare-jump" }
   | { kind: "!prepare-doubleJump" }
   | {
@@ -111,12 +120,16 @@ export type Level = {
   name: "empty" | "ground";
   startCoord: number;
   endCoord: number;
-  levelItem: { cat?: CatItem };
+  levelItem: { cat?: CatItem; barrier?: BarrierItem };
 };
 
 export type CatItem = {
   y: number;
   health: number;
+};
+export type BarrierItem = {
+  y: number;
+  x: number;
 };
 
 export type GameLevelList = Map<string, Level>;
@@ -128,8 +141,9 @@ export type State = {
   y: number;
   levelList: GameLevelList;
   levelOfMove: number;
-  doEffect: KindEffect;
+  doMoveEffect: KindMoveEffect;
   doubleJumpPossible: Boolean;
+  barrierPhase: BarrierPhase;
 };
 
 const getInitialState = (): State => {
@@ -140,8 +154,9 @@ const getInitialState = (): State => {
     y: 100,
     levelList: getLevelList(),
     levelOfMove: levelWithCat,
-    doEffect: null,
+    doMoveEffect: null,
     doubleJumpPossible: false,
+    barrierPhase: "waitingRequest",
   };
 };
 
@@ -207,6 +222,21 @@ const reducer = (state = getInitialState(), action: Action): State => {
       return waitingStartPhase(action, state);
     }
     case "gameStarted": {
+      //рисовка барьера будет на любой стадии!!
+      //смотрим на дефолт??!
+      //будто нам нужен параллельный флоу!
+      /* barrierRequesting(action, state); */
+      switch (action.type) {
+        case "barrierRequested": {
+          return barrierRequesting(action, state);
+        }
+        case "barrierMoved": {
+          return barrierRequesting(action, state);
+        }
+        /*  default:
+          return state; */
+      }
+
       switch (phaseInner) {
         case "running": {
           return running(action, state);
@@ -258,23 +288,73 @@ function App() {
     gameState,
     levelList,
     levelOfMove,
-    doEffect,
+    doMoveEffect,
     moveEffectId,
+    barrierPhase,
   ] = useSelector((state: State) => [
     state.gameState,
     state.levelList,
     state.levelOfMove,
-    state.doEffect,
+    state.doMoveEffect,
     state.moveEffectId,
+    state.barrierPhase,
   ]);
   const dispatch = useDispatch();
-  
+
   const level = levelList.get(`${levelOfMove}`);
   const currentYCoord =
     level && level.levelItem.cat ? level.levelItem.cat?.y : 0;
 
   useEffect(() => {
-    switch (doEffect?.kind) {
+    switch (barrierPhase) {
+      case "waitingRequest": {
+        /*    console.error("создать таймаут для бега"); */
+        const barrierTimeOut = setTimeout(function requestBarrier() {
+          dispatch({
+            type: "barrierRequested",
+          });
+        }, 5000);
+        break;
+      }
+      case "movingBarrier": {
+        const Path = 600;
+        const movingTime = 5000;
+        const tickTime = 20;
+        const moveTicks = movingTime / tickTime;
+        const moveInc = Path / moveTicks;
+
+        let tickTracker = 0;
+        const moveEffectId = setInterval(function moveBarrier() {
+          tickTracker += 1;
+
+          switch (true) {
+            case tickTracker < moveTicks:
+              dispatch({
+                type: "barrierMoved",
+                payload: moveInc,
+              });
+              break;
+          }
+        }, tickTime);
+
+        /*создаем тай-аут
+        через 3-5 секунд создадим интервал
+        который через время T будет запрашивать 
+        пересоздать барьер(список барьеров)
+         */
+        /*нам не важна внутренняя фаза
+        эффект проще вызвать на начале бегаи убить после завершения игры 
+        - окончания количества жизней
+         */
+        break;
+      }
+      default:
+        break;
+    }
+  }, [barrierPhase]);
+
+  useEffect(() => {
+    switch (doMoveEffect?.kind) {
       case "!prepare-jump": {
         // докуда прыгает
         const risingTo = levelHeight + addJumpHeight;
@@ -311,7 +391,7 @@ function App() {
 
       case "!prepare-fall": {
         const fallingTo = levelHeight;
-        const fallingTime = durationFall; 
+        const fallingTime = durationFall;
         const tickTime = deltaDuration;
         const fallTicks = fallingTime / tickTime;
         const fallInc = fallingTo / fallTicks;
@@ -329,13 +409,13 @@ function App() {
       }
 
       case "!removeEffect": {
-        clearInterval(doEffect.moveEffectId || 0);
+        clearInterval(doMoveEffect.moveEffectId || 0);
         /* dispatch({ type: "grounded" }); */
         dispatch({ type: "effectRemoved" });
         break;
       }
     }
-  }, [doEffect]);
+  }, [doMoveEffect]);
 
   const effectRefJump = React.useRef<number | null>(null);
   effectRefJump.current = moveEffectId;
@@ -355,6 +435,7 @@ function App() {
   }, []);
 
   const refCat = useRef<HTMLDivElement>(null);
+  const refBarrier = useRef<HTMLDivElement>(null);
 
   const getGameScreen = () => {
     switch (gameState) {
@@ -364,7 +445,11 @@ function App() {
       default:
         return (
           <>
-            <Grid refItem={refCat} levelHeight={levelHeight} />
+            <Grid
+              refBarrier={refBarrier}
+              refCat={refCat}
+              levelHeight={levelHeight}
+            />
             <Arrows />
           </>
         );

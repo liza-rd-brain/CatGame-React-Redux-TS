@@ -9,13 +9,13 @@ function running(action: Action, state: State): State {
           return {
             ...state,
             gameState: "gameStarted.jumpPreparing",
-            doEffect: { kind: "!prepare-jump" },
+            doMoveEffect: { kind: "!prepare-jump" },
           };
         case "bottom": {
           return {
             ...state,
             gameState: "gameStarted.fallPreparing",
-            doEffect: { kind: "!prepare-fall" },
+            doMoveEffect: { kind: "!prepare-fall" },
           };
         }
       }

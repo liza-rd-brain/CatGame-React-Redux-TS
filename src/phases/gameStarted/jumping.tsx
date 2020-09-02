@@ -20,7 +20,7 @@ function jumping(action: Action, state: State): State {
     }
 
     case "jumpStarted": {
-      console.log(state.gameState);
+    
       return {
         ...state,
         gameState: "gameStarted.jumping",
@@ -42,7 +42,7 @@ function jumping(action: Action, state: State): State {
         const needSwitchLevel = catY >= maxY;
 
         if (needSwitchLevel) {
-          console.log("switch");
+          /* console.log("switch"); */
           const catItem = { ...catLevel.levelItem.cat };
           const newCatLevel = {
             ...nextLevel,
@@ -88,24 +88,24 @@ function jumping(action: Action, state: State): State {
       return {
         ...state,
         gameState: "gameStarted.endingJump",
-        doEffect: { kind: "!removeEffect", moveEffectId: state.moveEffectId },
+        doMoveEffect: { kind: "!removeEffect", moveEffectId: state.moveEffectId },
       };
     }
     case "effectRemoved": {
-      console.log("второй прыжок или падение");
+      /* console.log("второй прыжок или падение"); */
       if (state.doubleJumpPossible) {
-        console.log("запрошен двойной прыжок");
+    /*     console.log("запрошен двойной прыжок"); */
         return {
           ...state,
           gameState: "gameStarted.doubleJumpPreparing",
-          doEffect: { kind: "!prepare-jump" },
+          doMoveEffect: { kind: "!prepare-jump" },
           doubleJumpPossible: false,
         };
       } else
         return {
           ...state,
           gameState: "gameStarted.fallPreparing",
-          doEffect: { kind: "!prepare-fall" },
+          doMoveEffect: { kind: "!prepare-fall" },
         }; /* return state; */
       /*else падаем*/
     }
@@ -129,7 +129,7 @@ function jumping(action: Action, state: State): State {
           return {
             ...state,
             gameState: "gameStarted.grounding",
-            doEffect: {
+            doMoveEffect: {
               kind: "!removeEffect",
               moveEffectId: state.moveEffectId,
             },
@@ -151,7 +151,7 @@ function jumping(action: Action, state: State): State {
         switch (true) {
           case needSwitchLevel: {
             if (nextLevel) {
-              console.log("switch fall");
+              /* console.log("switch fall"); */
               const catItem = { ...catLevel.levelItem.cat };
               newCatLevel = {
                 ...nextLevel,

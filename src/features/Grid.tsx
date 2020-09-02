@@ -2,6 +2,7 @@ import React from "react";
 import { useSelector, useDispatch } from "react-redux";
 import styled from "styled-components";
 import Cat from "./Cat";
+import Barrier from "./Barrier";
 import { State, GameLevelList, Level } from "./../app";
 
 const GridItem = styled.div`
@@ -28,7 +29,8 @@ const Level = styled.div<LevelName>`
 
 const getGameGrid = (
   levelList: GameLevelList,
-  ref: any,
+  refCat: any,
+  refBarrier: any,
   levelHeight: number
 ) => {
   const gridArray = Array.from(levelList).reverse();
@@ -38,13 +40,44 @@ const getGameGrid = (
     const level = item[1];
     const levelCoord = level.endCoord;
     const levelHasCat = level.levelItem.cat ? true : false;
-    /*  const levelHasCat = level.cat ? true : false; */
-    switch (levelHasCat) {
+    const levelHasBarrier = level.levelItem.barrier ? true : false;
+    const levelHasCatAndBarrier = levelHasCat && levelHasBarrier;
+    const catY = level.levelItem.cat ? level.levelItem.cat.y : 0;
+    const barrierX = level.levelItem.barrier ? level.levelItem.barrier.x : 0;
+    return (
+      <Level name={level.name} levelHeight={levelHeight}>
+        {`${index} - ${levelCoord}`}
+        {(() => {
+          switch (true) {
+            case levelHasCatAndBarrier: {
+              return (
+                <>
+                  <Cat ref={refCat} y={catY} />
+                  <Barrier ref={refBarrier} x={barrierX} />
+                </>
+              );
+            }
+            case levelHasCat: {
+              return <Cat ref={refCat} y={catY} />;
+            }
+            case levelHasBarrier: {
+              return <Barrier ref={refBarrier} x={barrierX} />;
+            }
+            default:
+              return null;
+          }
+        })()}
+      </Level>
+    );
+
+    /* switch (levelHasCat) {
+     // cкорее тут проверка на барьер!!!!!!
       case true: {
         const catY = level.levelItem.cat ? level.levelItem.cat.y : 0;
         return (
           <Level name={level.name} levelHeight={levelHeight}>
             <Cat ref={ref} y={catY} />
+            <BarrierList />
             {`${index} - ${levelCoord}`}
           </Level>
         );
@@ -56,7 +89,7 @@ const getGameGrid = (
           </Level>
         );
       }
-    }
+    } */
   });
 };
 
@@ -64,7 +97,12 @@ function Grid(props: any) {
   const [levelList] = useSelector((state: State) => [state.levelList]);
   return (
     <GridItem>
-      {getGameGrid(levelList, props.refItem, props.levelHeight)}
+      {getGameGrid(
+        levelList,
+        props.refCat,
+        props.refBarrier,
+        props.levelHeight
+      )}
       {/* <Cat ref={props.refItem} /> */}
     </GridItem>
   );

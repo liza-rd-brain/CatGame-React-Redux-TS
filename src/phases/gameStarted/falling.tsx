@@ -11,7 +11,7 @@ function falling(action: Action, state: State): State {
     }
 
     case "falled": {
-      console.log(" need fall");
+     /*  console.log(" need fall"); */
       const levelOfMove = state.levelOfMove;
       const newLevelList = new Map(state.levelList);
       /* до тех пор пока catY  не станет мин*/
@@ -28,7 +28,7 @@ function falling(action: Action, state: State): State {
         /*  const isNotStartLevel = startLevel != levelOfMove; */
         const isNotStartLevel = startCatY != catY;
         const isBottomLevel = catY === 0;
-        console.log(startLevel);
+       /*  console.log(startLevel); */
 
         const goingUnderGround =
           isNotStartLevel && groundingLevel && catY <= minY;
@@ -37,7 +37,7 @@ function falling(action: Action, state: State): State {
           return {
             ...state,
             gameState: "gameStarted.grounding",
-            doEffect: {
+            doMoveEffect: {
               kind: "!removeEffect",
               moveEffectId: state.moveEffectId,
             },
@@ -59,7 +59,7 @@ function falling(action: Action, state: State): State {
         switch (true) {
           case needSwitchLevel: {
             if (nextLevel) {
-              console.log("switch fall");
+            /*   console.log("switch fall"); */
               const catItem = { ...newCatLevel.levelItem.cat };
               newCatLevel = {
                 ...nextLevel,
@@ -73,7 +73,7 @@ function falling(action: Action, state: State): State {
               delete catLevel.levelItem.cat;
               newLevelList.set(`${levelOfMove}`, catLevel);
               newLevelList.set(`${levelOfMove - 1}`, newCatLevel);
-              console.log(newLevelList);
+             /*  console.log(newLevelList); */
               return {
                 ...state,
                 levelOfMove: state.levelOfMove - 1,
@@ -94,7 +94,7 @@ function falling(action: Action, state: State): State {
       return {
         ...state,
         gameState: "gameStarted.running",
-        doEffect: null,
+        doMoveEffect: null,
         moveEffectId: null,
       };
     }

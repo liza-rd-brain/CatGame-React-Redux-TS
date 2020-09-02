@@ -9,17 +9,16 @@ type CatOnLevel = {
   y: number;
 };
 
-const shiftCoord = 15;
 
 const CatItem = styled.div<CatOnLevel>`
   position: absolute;
   z-index: 1;
   width: 146px;
   height: 50px;
-  bottom:  ${(props) => {
+  bottom: ${(props) => {
     return `${props.y}px`;
   }};
-  left: 240px;
+  left: 160px;
   background: url("../assets/cat_run.gif") no-repeat;
   background-size: 91px 50px;
 `;

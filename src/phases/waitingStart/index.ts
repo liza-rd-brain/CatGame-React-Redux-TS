@@ -6,6 +6,7 @@ function waitingStart(action: Action, state: State): State {
       return {
         ...state,
         gameState: "gameStarted.running",
+        barrierPhase: "waitingRequest",
       };
     }
     default:
