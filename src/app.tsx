@@ -170,6 +170,7 @@ export type State = {
   doMoveEffect: KindMoveEffect;
   doubleJumpPossible: Boolean;
   barrierPhase: BarrierPhase;
+  barrierXCoord: number;
 };
 
 const getInitialState = (): State => {
@@ -183,6 +184,7 @@ const getInitialState = (): State => {
     doMoveEffect: null,
     doubleJumpPossible: false,
     barrierPhase: "waitingStartGame",
+    barrierXCoord: 0
   };
 };
 

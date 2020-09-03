@@ -40,14 +40,41 @@ function barrierRequesting(action: Action, state: State): State {
           item.levelItem.barrier.x = item.levelItem.barrier.x + action.payload;
         }
       });
+      /*проверка на столкновение
+      1.проверяем x барьера
+      2. если он = catPositionX
+      3. проверяем есть ли на levelOfMove barrier
+      4.если есть = столкновение!!!
+      */
+      //вынести наружу X барьера
+      //4 - приращение движения барьера по горизонтали
+      // учесть длину котика
+      //проверка на коллизию - одноразовая!
+      //дать флажок в стейт, который будет меняться с каждой перерисовкой.
+      //проверено столкновение или нет!!
+      const needCheckCollision =
+        state.barrierXCoord <= 340 && state.barrierXCoord + 4 >= 340;
 
-      /* const levelArray = Array.from(newLevelList); */
-      /*   console.log(newLevelList); */
-
+      switch (needCheckCollision) {
+        case true: {
+         /* 
+          */
+          const chekingLevel = newLevelList.get(`${state.levelOfMove}`);
+          const hasLevelBarrier = chekingLevel?.levelItem.barrier ? true : false;
+          switch (true) {
+            case hasLevelBarrier: {
+              console.log("столкнулись с котом");
+            }
+          }
+        }
+        default:
+          break;
+      }
       return {
         ...state,
         levelList: newLevelList,
         barrierPhase: "movingBarrier",
+        barrierXCoord: state.barrierXCoord + action.payload,
       };
     }
     case "barrierStoped": {
@@ -63,6 +90,7 @@ function barrierRequesting(action: Action, state: State): State {
         ...state,
         levelList: newLevelList,
         barrierPhase: "barrierRequesting",
+        barrierXCoord: 0,
       };
 
       /*  вытащить барьер удалить!!! */

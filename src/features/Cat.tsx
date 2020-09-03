@@ -12,7 +12,7 @@ type CatOnLevel = {
 const CatItem = styled.div<CatOnLevel>`
   position: absolute;
   z-index: 1;
-  width: 146px;
+  width: 92px;
   height: 50px;
   bottom: ${(props) => {
     return `${props.y}px`;
