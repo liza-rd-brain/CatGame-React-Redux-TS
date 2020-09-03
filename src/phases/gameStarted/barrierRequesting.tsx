@@ -1,6 +1,8 @@
 import { State, Action } from "../../app";
 
 const barrierStartX = 0;
+
+//разнести потом методы на отдельные фазы
 function barrierRequesting(action: Action, state: State): State {
   switch (action.type) {
     case "barrierRequested": {
@@ -20,7 +22,7 @@ function barrierRequesting(action: Action, state: State): State {
         };
 
         newLevelList.set(`${barrierLevelNumber}`, newBarrierLevel);
-        console.log(newLevelList);
+        console.log("лист с барьером", newLevelList);
 
         return {
           ...state,
@@ -40,13 +42,30 @@ function barrierRequesting(action: Action, state: State): State {
       });
 
       /* const levelArray = Array.from(newLevelList); */
-      console.log(newLevelList);
+      /*   console.log(newLevelList); */
 
       return {
         ...state,
         levelList: newLevelList,
         barrierPhase: "movingBarrier",
       };
+    }
+    case "barrierStoped": {
+      const newLevelList = new Map(state.levelList);
+      newLevelList.forEach((item, key) => {
+        if (item.levelItem.barrier) {
+          delete item.levelItem.barrier;
+        }
+      });
+      console.log(newLevelList, state.levelList);
+      console.log(newLevelList, state.levelList);
+      return {
+        ...state,
+        levelList: newLevelList,
+        barrierPhase: "barrierRequesting",
+      };
+
+      /*  вытащить барьер удалить!!! */
     }
   }
   return state;

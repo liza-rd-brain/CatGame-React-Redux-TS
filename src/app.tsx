@@ -20,15 +20,32 @@ import grounding from "./phases/gameStarted/grounding";
 2. котик бежит и прыгает на белом фоне
 3. описать, спроектировать сущности и состояния
  */
-
 const Field = styled.div`
   position: relative;
   width: 600px;
   height: 800px;
   margin: 0 auto;
+  margin-left: 50px;
   border: 1px solid black;
   display: flex;
   flex-direction: column;
+`;
+
+const FieldWrap = styled.div`
+  position: relative;
+  width: 650px;
+  height: 800px;
+  display: flex;
+`;
+
+const EmptyColumn = styled.div`
+  background-color: white;
+  width: 50px;
+  /* border: 3px solid red; */
+  height: 800px;
+  position: absolute;
+  left: 0;
+  z-index: 5;
 `;
 
 /*коэфицент кратности-?! */
@@ -57,7 +74,11 @@ export type BarrierProps = {
 
 export type MoveDirection = "top" | "bottom";
 
-export type BarrierPhase = "waitingRequest" | "movingBarrier";
+export type BarrierPhase =
+  | "waitingStartGame"
+  | "waitingRequest"
+  | "movingBarrier"
+  | "barrierRequesting";
 
 export type GameState =
   | "waitingStart"
@@ -100,8 +121,10 @@ export type Action =
   | { type: "endOfFall" }
   | { type: "catfFall" }
   | { type: "catDoubleJump" }
+  //barrier
   | { type: "barrierRequested" }
-  | { type: "barrierMoved"; payload: number };
+  | { type: "barrierMoved"; payload: number }
+  | { type: "barrierStoped" };
 
 export type KindMoveEffect =
   | { kind: "!prepare-jump" }
@@ -156,7 +179,7 @@ const getInitialState = (): State => {
     levelOfMove: levelWithCat,
     doMoveEffect: null,
     doubleJumpPossible: false,
-    barrierPhase: "waitingRequest",
+    barrierPhase: "waitingStartGame",
   };
 };
 
@@ -231,6 +254,9 @@ const reducer = (state = getInitialState(), action: Action): State => {
           return barrierRequesting(action, state);
         }
         case "barrierMoved": {
+          return barrierRequesting(action, state);
+        }
+        case "barrierStoped": {
           return barrierRequesting(action, state);
         }
         /*  default:
@@ -309,13 +335,24 @@ function App() {
     switch (barrierPhase) {
       case "waitingRequest": {
         /*    console.error("создать таймаут для бега"); */
-        const barrierTimeOut = setTimeout(function requestBarrier() {
+        /*   const barrierTimeOut = setTimeout(function requestBarrier() {
           dispatch({
             type: "barrierRequested",
           });
-        }, 5000);
+        }, 2000); */
+        dispatch({
+          type: "barrierRequested",
+        });
         break;
       }
+
+      case "barrierRequesting": {
+        dispatch({
+          type: "barrierRequested",
+        });
+        break;
+      }
+
       case "movingBarrier": {
         const Path = 600;
         const movingTime = 5000;
@@ -324,16 +361,23 @@ function App() {
         const moveInc = Path / moveTicks;
 
         let tickTracker = 0;
-        const moveEffectId = setInterval(function moveBarrier() {
+        const moveBarrierId = setInterval(function moveBarrier() {
           tickTracker += 1;
 
           switch (true) {
-            case tickTracker < moveTicks:
+            case tickTracker < moveTicks + 1:
+              console.log("Inc", moveInc);
               dispatch({
                 type: "barrierMoved",
                 payload: moveInc,
               });
               break;
+            default:
+              clearInterval(moveBarrierId);
+              dispatch({
+                type: "barrierStoped",
+              });
+            //очистить moveBarrierId
           }
         }, tickTime);
 
@@ -445,17 +489,25 @@ function App() {
       default:
         return (
           <>
-            <Grid
-              refBarrier={refBarrier}
-              refCat={refCat}
-              levelHeight={levelHeight}
-            />
-            <Arrows />
+            <>
+              <Grid
+                refBarrier={refBarrier}
+                refCat={refCat}
+                levelHeight={levelHeight}
+              />
+
+              <Arrows />
+            </>
           </>
         );
     }
   };
-  return <Field>{getGameScreen()}</Field>;
+  return (
+    <FieldWrap>
+      <EmptyColumn />
+      <Field>{getGameScreen()}</Field>
+    </FieldWrap>
+  );
 }
 
 const store = createStore(
