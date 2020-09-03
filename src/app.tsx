@@ -49,26 +49,29 @@ const EmptyColumn = styled.div`
 `;
 
 /*коэфицент кратности-?! */
-export const duration = 260 * 1.5; /*  * 2; */
-const durationFall = 200; /*  * 2; */
+export const duration = 300; /* * 1.5 */ /*  * 2; */
+export const durationFall = 300; /*  * 2; */
 /*  750; */
 export const deltaDuration = 20;
 export const defaultDeltaCoord = 8;
 /* export const levelHeight = 70; */
-export const levelHeight = 80;
+export const levelHeight = 50;
 export const catHeight = 25;
-export const addJumpHeight = 24;
+export const addJumpHeight = 25;
 export const levelNumber = 7;
 const levelWithCat = 2;
 /*4-потом домики!! */
 const levelWithGroung = [0, 2, 4];
+
+//есть смысл пробросить в котика?!
+export const catPositionX = 340;
 
 export type CatProps = {
   y: number;
 };
 
 export type BarrierProps = {
-  /*  y: number; */
+  y: number;
   x: number;
 };
 
@@ -355,7 +358,7 @@ function App() {
 
       case "movingBarrier": {
         const Path = 600;
-        const movingTime = 5000;
+        const movingTime = 3000;
         const tickTime = 20;
         const moveTicks = movingTime / tickTime;
         const moveInc = Path / moveTicks;

@@ -4,11 +4,10 @@ import styled, { ThemeProvider, keyframes } from "styled-components";
 import { useSpring, animated } from "react-spring";
 
 import { CatMove, CatProps } from "./../app";
-
+import { catPositionX } from "./../app";
 type CatOnLevel = {
   y: number;
 };
-
 
 const CatItem = styled.div<CatOnLevel>`
   position: absolute;
@@ -18,7 +17,7 @@ const CatItem = styled.div<CatOnLevel>`
   bottom: ${(props) => {
     return `${props.y}px`;
   }};
-  left: 160px;
+  right: ${() => `${catPositionX}px`};
   background: url("../assets/cat_run.gif") no-repeat;
   background-size: 91px 50px;
 `;

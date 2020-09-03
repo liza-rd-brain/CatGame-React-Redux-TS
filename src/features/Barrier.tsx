@@ -6,7 +6,7 @@ import { BarrierProps } from "./../app";
 
 type BarrierCoord = {
   x: number;
-  /* y: number; */
+  y: number;
 };
 
 const BarrierItem = styled.div<BarrierCoord>`
@@ -18,11 +18,14 @@ const BarrierItem = styled.div<BarrierCoord>`
     return ` ${props.x}px`;
   }};
   position: absolute;
+  bottom: ${(props) => {
+    return `${props.y}px`;
+  }};
   z-index: 3;
 `;
 
 const Barrier = React.forwardRef((props: BarrierProps, ref: any) => (
-  <BarrierItem ref={ref} x={props.x} />
+  <BarrierItem ref={ref} x={props.x} y={props.y} />
 ));
 
 export default Barrier;

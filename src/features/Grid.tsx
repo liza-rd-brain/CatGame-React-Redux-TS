@@ -24,7 +24,6 @@ const Level = styled.div<LevelName>`
       return "2px solid black";
     } else return "1px dotted gray";
   }};
-  /*  position: relative; */
 `;
 
 const getGameGrid = (
@@ -44,6 +43,7 @@ const getGameGrid = (
     const levelHasCatAndBarrier = levelHasCat && levelHasBarrier;
     const catY = level.levelItem.cat ? level.levelItem.cat.y : 0;
     const barrierX = level.levelItem.barrier ? level.levelItem.barrier.x : 0;
+    const barrierY = level.levelItem.barrier ? level.levelItem.barrier.y : 0;
     return (
       <Level name={level.name} levelHeight={levelHeight}>
         {`${index} - ${levelCoord}`}
@@ -53,7 +53,7 @@ const getGameGrid = (
               return (
                 <>
                   <Cat ref={refCat} y={catY} />
-                  <Barrier ref={refBarrier} x={barrierX} />
+                  <Barrier ref={refBarrier} x={barrierX} y={barrierY} />
                 </>
               );
             }
@@ -61,7 +61,7 @@ const getGameGrid = (
               return <Cat ref={refCat} y={catY} />;
             }
             case levelHasBarrier: {
-              return <Barrier ref={refBarrier} x={barrierX} />;
+              return <Barrier ref={refBarrier} x={barrierX} y={barrierY} />;
             }
             default:
               return null;
