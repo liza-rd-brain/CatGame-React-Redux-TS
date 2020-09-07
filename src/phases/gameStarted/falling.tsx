@@ -22,11 +22,13 @@ function falling(action: Action, state: State): State {
         const groundingLevel = catLevel.name === "ground";
         const minY = catLevel.startCoord;
         const catY = catLevel.levelItem.cat.y;
+        
         //20 - погрешность на лапки
-        const needSwitchLevel = catY + 30 <= minY;
+        const needSwitchLevel = catY /* + 30 */ <= minY;
         const startLevel = action.startLevel;
         const startCatY = action.currCatY;
         /*  const isNotStartLevel = startLevel != levelOfMove; */
+        //встачить сюда пограшность на лапки?!
         const isNotStartLevel = startCatY != catY;
         const isBottomLevel = catY === 0;
         /*  console.log(startLevel); */
