@@ -34,7 +34,7 @@ const getGameGrid = (
 ) => {
   const gridArray = Array.from(levelList).reverse();
   /*  console.log(gridArray); */
-  return gridArray.map((item: [string, Level]) => {
+  return gridArray.map((item: [string, Level], numberOfLevel) => {
     const index = item[0];
     const level = item[1];
     const levelCoord = level.endCoord;
@@ -53,7 +53,7 @@ const getGameGrid = (
               return (
                 <>
                   <Cat ref={refCat} y={catY} />
-                  <Barrier ref={refBarrier} x={barrierX} y={barrierY} />
+                  <Barrier ref={refBarrier} x={barrierX} y={barrierY} level={numberOfLevel} />
                 </>
               );
             }
@@ -61,7 +61,14 @@ const getGameGrid = (
               return <Cat ref={refCat} y={catY} />;
             }
             case levelHasBarrier: {
-              return <Barrier ref={refBarrier} x={barrierX} y={barrierY} />;
+              return (
+                <Barrier
+                  ref={refBarrier}
+                  x={barrierX}
+                  y={barrierY}
+                  level={numberOfLevel}
+                />
+              );
             }
             default:
               return null;
@@ -69,27 +76,6 @@ const getGameGrid = (
         })()}
       </Level>
     );
-
-    /* switch (levelHasCat) {
-     // cкорее тут проверка на барьер!!!!!!
-      case true: {
-        const catY = level.levelItem.cat ? level.levelItem.cat.y : 0;
-        return (
-          <Level name={level.name} levelHeight={levelHeight}>
-            <Cat ref={ref} y={catY} />
-            <BarrierList />
-            {`${index} - ${levelCoord}`}
-          </Level>
-        );
-      }
-      case false: {
-        return (
-          <Level name={level.name} levelHeight={levelHeight}>
-            {`${index} - ${levelCoord}`}
-          </Level>
-        );
-      }
-    } */
   });
 };
 

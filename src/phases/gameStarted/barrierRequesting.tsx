@@ -8,7 +8,7 @@ function barrierRequesting(action: Action, state: State): State {
     case "barrierRequested": {
       /*  console.error("новый барьер!"); */
       const barrierLevelNumber = Math.floor(Math.random() * 4) + 1;
-      /*     const barrierLevelNumber = 2; */
+   /*    const barrierLevelNumber = 1; */
       /*       console.log(barrierLevelNumber); */
 
       const newLevelList = new Map(state.levelList);

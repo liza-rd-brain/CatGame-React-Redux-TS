@@ -73,6 +73,7 @@ export type CatProps = {
 export type BarrierProps = {
   y: number;
   x: number;
+  level: number;
 };
 
 export type MoveDirection = "top" | "bottom";
@@ -156,6 +157,7 @@ export type CatItem = {
 export type BarrierItem = {
   y: number;
   x: number;
+  
 };
 
 export type GameLevelList = Map<string, Level>;
