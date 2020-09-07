@@ -171,6 +171,7 @@ export type State = {
   doubleJumpPossible: Boolean;
   barrierPhase: BarrierPhase;
   barrierXCoord: number;
+  needChekCollision: boolean;
 };
 
 const getInitialState = (): State => {
@@ -184,7 +185,8 @@ const getInitialState = (): State => {
     doMoveEffect: null,
     doubleJumpPossible: false,
     barrierPhase: "waitingStartGame",
-    barrierXCoord: 0
+    barrierXCoord: 0,
+    needChekCollision: false,
   };
 };
 
@@ -371,7 +373,7 @@ function App() {
 
           switch (true) {
             case tickTracker < moveTicks + 1:
-              console.log("Inc", moveInc);
+              /* console.log("Inc", moveInc); */
               dispatch({
                 type: "barrierMoved",
                 payload: moveInc,

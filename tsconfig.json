@@ -10,6 +10,7 @@
     "jsx": "react",
     "allowJs": true,
     "allowSyntheticDefaultImports": true,
-    "lib": ["esnext.array", "es2018", "dom"],
+    "lib": ["esnext", "es2018", "dom"],
+    "downlevelIteration":true
   }
 }

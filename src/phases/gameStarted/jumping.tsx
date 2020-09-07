@@ -39,7 +39,8 @@ function jumping(action: Action, state: State): State {
         const maxY = catLevel.endCoord;
         const catY = catLevel.levelItem.cat.y;
         /*   const newCatY = catLevel.levelItem.cat.y + action.payload; */
-        const needSwitchLevel = catY >= maxY;
+        //20- погрешность на лапки
+        const needSwitchLevel = catY+20 >= maxY;
 
         if (needSwitchLevel) {
           /* console.log("switch"); */

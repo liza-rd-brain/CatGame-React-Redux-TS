@@ -1,4 +1,4 @@
-import { State, Action } from "../../app";
+import { State, Action, Level } from "../../app";
 
 const barrierStartX = 0;
 
@@ -6,9 +6,10 @@ const barrierStartX = 0;
 function barrierRequesting(action: Action, state: State): State {
   switch (action.type) {
     case "barrierRequested": {
-      console.error("новый барьер!");
+      /*  console.error("новый барьер!"); */
       const barrierLevelNumber = Math.floor(Math.random() * 4) + 1;
-      console.log(barrierLevelNumber);
+      /*     const barrierLevelNumber = 2; */
+      /*       console.log(barrierLevelNumber); */
 
       const newLevelList = new Map(state.levelList);
       const barrierLevel = newLevelList.get(`${barrierLevelNumber}`);
@@ -22,60 +23,76 @@ function barrierRequesting(action: Action, state: State): State {
         };
 
         newLevelList.set(`${barrierLevelNumber}`, newBarrierLevel);
-        console.log("лист с барьером", newLevelList);
+        /*    console.log("лист с барьером", newLevelList); */
 
         return {
           ...state,
           levelList: newLevelList,
           barrierPhase: "movingBarrier",
+          needChekCollision: true,
         };
       } else return state;
     }
     case "barrierMoved": {
       const newLevelList = new Map(state.levelList);
-      /*нужно найти уровень с барьером и помеять его x
-      если уровенй будет несколько, то всем назначаем инкрементированный х*/
+
+      //вариант как перебрать без мутации
       newLevelList.forEach((item, key) => {
         if (item.levelItem.barrier) {
-          item.levelItem.barrier.x = item.levelItem.barrier.x + action.payload;
+          /*  item.levelItem.barrier.x = item.levelItem.barrier.x + action.payload; */
+          item = {
+            ...item,
+            levelItem: {
+              ...item.levelItem,
+              barrier: {
+                ...item.levelItem.barrier,
+                x: item.levelItem.barrier.x + action.payload,
+              },
+            },
+          };
+          newLevelList.set(key, item);
         }
       });
-      /*проверка на столкновение
-      1.проверяем x барьера
-      2. если он = catPositionX
-      3. проверяем есть ли на levelOfMove barrier
-      4.если есть = столкновение!!!
-      */
-      //вынести наружу X барьера
-      //4 - приращение движения барьера по горизонтали
-      // учесть длину котика
-      //проверка на коллизию - одноразовая!
-      //дать флажок в стейт, который будет меняться с каждой перерисовкой.
-      //проверено столкновение или нет!!
-      const needCheckCollision =
-        state.barrierXCoord <= 340 && state.barrierXCoord + 4 >= 340;
+      /*   console.log(state.levelList);
+      console.log(newLevelList); */
+      //10 - погрешность на голову
+      //60 погрешность на хвост
+      const deltaCheckCollision =
+        state.barrierXCoord <= 340 + 60 && state.barrierXCoord + 2 >= 340 + 10;
 
-      switch (needCheckCollision) {
+      const needCheckColision = deltaCheckCollision && state.needChekCollision;
+      switch (needCheckColision) {
         case true: {
-         /* 
-          */
+          /*
+           */
           const chekingLevel = newLevelList.get(`${state.levelOfMove}`);
-          const hasLevelBarrier = chekingLevel?.levelItem.barrier ? true : false;
+          const hasLevelBarrier = chekingLevel?.levelItem.barrier
+            ? true
+            : false;
           switch (true) {
-            case hasLevelBarrier: {
-              console.log("столкнулись с котом");
-            }
+            case hasLevelBarrier:
+              // тут проверка по y
+              {
+                console.log("столкнулись с котом");
+              }
+              return {
+                ...state,
+                levelList: newLevelList,
+                barrierPhase: "movingBarrier",
+                barrierXCoord: state.barrierXCoord + action.payload,
+                // за один цил движения барьера проверка на столкновение одноразовая
+                needChekCollision: false,
+              };
           }
         }
         default:
-          break;
+          return {
+            ...state,
+            levelList: newLevelList,
+            barrierPhase: "movingBarrier",
+            barrierXCoord: state.barrierXCoord + action.payload,
+          };
       }
-      return {
-        ...state,
-        levelList: newLevelList,
-        barrierPhase: "movingBarrier",
-        barrierXCoord: state.barrierXCoord + action.payload,
-      };
     }
     case "barrierStoped": {
       const newLevelList = new Map(state.levelList);
@@ -84,8 +101,8 @@ function barrierRequesting(action: Action, state: State): State {
           delete item.levelItem.barrier;
         }
       });
-      console.log(newLevelList, state.levelList);
-      console.log(newLevelList, state.levelList);
+      /*   console.log(newLevelList, state.levelList);
+       */
       return {
         ...state,
         levelList: newLevelList,
