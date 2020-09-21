@@ -8,7 +8,7 @@ function barrierRequesting(action: Action, state: State): State {
     case "barrierRequested": {
       /*  console.error("новый барьер!"); */
       const barrierLevelNumber = Math.floor(Math.random() * 4) + 1;
-   /*    const barrierLevelNumber = 1; */
+      /*    const barrierLevelNumber = 1; */
       /*       console.log(barrierLevelNumber); */
 
       const newLevelList = new Map(state.levelList);
@@ -58,8 +58,8 @@ function barrierRequesting(action: Action, state: State): State {
       //10 - погрешность на голову
       //60 погрешность на хвост
       const deltaCheckCollision =
-        state.barrierXCoord <= 340 + 60 && state.barrierXCoord + 2 >= 340 + 10;
-
+        /* state.barrierXCoord <= 340 + 60 && state.barrierXCoord + 2 >= 340 + 10; */
+        state.barrierXCoord <= 340 + 30 && state.barrierXCoord + 2 >= 340 + 10;
       const needCheckColision = deltaCheckCollision && state.needChekCollision;
       switch (needCheckColision) {
         case true: {
