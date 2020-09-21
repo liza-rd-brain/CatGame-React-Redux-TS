@@ -157,7 +157,6 @@ export type CatItem = {
 export type BarrierItem = {
   y: number;
   x: number;
-  
 };
 
 export type GameLevelList = Map<string, Level>;
@@ -319,21 +318,16 @@ const reducer = (state = getInitialState(), action: Action): State => {
 };
 
 function App() {
-  const [
+  const {
     gameState,
     levelList,
     levelOfMove,
     doMoveEffect,
     moveEffectId,
     barrierPhase,
-  ] = useSelector((state: State) => [
-    state.gameState,
-    state.levelList,
-    state.levelOfMove,
-    state.doMoveEffect,
-    state.moveEffectId,
-    state.barrierPhase,
-  ]);
+  } = useSelector((state: State) => ({
+    ...state,
+  }));
   const dispatch = useDispatch();
 
   const level = levelList.get(`${levelOfMove}`);
